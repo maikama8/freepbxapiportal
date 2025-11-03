@@ -13,41 +13,87 @@
                 </button>
             </div>
 
-            <!-- Filters -->
+            <!-- Advanced Search and Filters -->
             <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bx bx-search"></i> Search & Filters
+                        <button class="btn btn-sm btn-outline-primary ms-2" type="button" data-bs-toggle="collapse" data-bs-target="#advancedFilters">
+                            <i class="bx bx-filter"></i> Advanced
+                        </button>
+                    </h5>
+                </div>
                 <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-3">
-                            <label for="roleFilter" class="form-label">Role</label>
-                            <select id="roleFilter" class="form-select">
-                                <option value="">All Roles</option>
-                                <option value="customer">Customer</option>
-                                <option value="operator">Operator</option>
-                            </select>
+                    <!-- Quick Search -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bx bx-search"></i></span>
+                                <input type="text" id="quickSearch" class="form-control" placeholder="Search by name, email, phone, or extension...">
+                                <button class="btn btn-primary" type="button" id="searchBtn">Search</button>
+                            </div>
                         </div>
-                        <div class="col-md-3">
-                            <label for="accountTypeFilter" class="form-label">Account Type</label>
-                            <select id="accountTypeFilter" class="form-select">
-                                <option value="">All Types</option>
-                                <option value="prepaid">Prepaid</option>
-                                <option value="postpaid">Postpaid</option>
-                            </select>
-                        </div>
-                        <div class="col-md-3">
-                            <label for="statusFilter" class="form-label">Status</label>
-                            <select id="statusFilter" class="form-select">
-                                <option value="">All Statuses</option>
-                                <option value="active">Active</option>
-                                <option value="inactive">Inactive</option>
-                                <option value="locked">Locked</option>
-                            </select>
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label">&nbsp;</label>
-                            <div class="d-grid">
+                        <div class="col-md-6">
+                            <div class="d-flex gap-2">
                                 <button type="button" id="clearFilters" class="btn btn-outline-secondary">
-                                    Clear Filters
+                                    <i class="bx bx-x"></i> Clear All
                                 </button>
+                                <button type="button" id="exportCustomers" class="btn btn-outline-success">
+                                    <i class="bx bx-export"></i> Export
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Advanced Filters (Collapsible) -->
+                    <div class="collapse" id="advancedFilters">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <label for="nameSearch" class="form-label">Name</label>
+                                <input type="text" id="nameSearch" class="form-control" placeholder="Search by name">
+                            </div>
+                            <div class="col-md-3">
+                                <label for="emailSearch" class="form-label">Email</label>
+                                <input type="text" id="emailSearch" class="form-control" placeholder="Search by email">
+                            </div>
+                            <div class="col-md-3">
+                                <label for="phoneSearch" class="form-label">Phone</label>
+                                <input type="text" id="phoneSearch" class="form-control" placeholder="Search by phone">
+                            </div>
+                            <div class="col-md-3">
+                                <label for="roleFilter" class="form-label">Role</label>
+                                <select id="roleFilter" class="form-select">
+                                    <option value="">All Roles</option>
+                                    <option value="customer">Customer</option>
+                                    <option value="operator">Operator</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row mt-3">
+                            <div class="col-md-3">
+                                <label for="accountTypeFilter" class="form-label">Account Type</label>
+                                <select id="accountTypeFilter" class="form-select">
+                                    <option value="">All Types</option>
+                                    <option value="prepaid">Prepaid</option>
+                                    <option value="postpaid">Postpaid</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="statusFilter" class="form-label">Status</label>
+                                <select id="statusFilter" class="form-select">
+                                    <option value="">All Statuses</option>
+                                    <option value="active">Active</option>
+                                    <option value="inactive">Inactive</option>
+                                    <option value="locked">Locked</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="balanceMin" class="form-label">Min Balance</label>
+                                <input type="number" id="balanceMin" class="form-control" placeholder="0.00" step="0.01">
+                            </div>
+                            <div class="col-md-3">
+                                <label for="balanceMax" class="form-label">Max Balance</label>
+                                <input type="number" id="balanceMax" class="form-control" placeholder="1000.00" step="0.01">
                             </div>
                         </div>
                     </div>

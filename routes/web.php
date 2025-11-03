@@ -274,7 +274,17 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     });
     Route::get('/payments', function () { return view('admin.payments.index'); })->name('payments.index');
     Route::get('/reports', function () { return view('admin.reports.index'); })->name('reports.index');
-    Route::get('/audit', function () { return view('admin.audit.index'); })->name('audit.index');
+    
+    // Audit Log Management
+    Route::prefix('audit')->name('audit.')->group(function () {
+        Route::get('/', [App\Http\Controllers\Admin\AuditController::class, 'index'])->name('index');
+        Route::get('/data', [App\Http\Controllers\Admin\AuditController::class, 'getData'])->name('data');
+        Route::get('/statistics', [App\Http\Controllers\Admin\AuditController::class, 'getStatistics'])->name('statistics');
+        Route::get('/users', [App\Http\Controllers\Admin\AuditController::class, 'getUsers'])->name('users');
+        Route::get('/actions', [App\Http\Controllers\Admin\AuditController::class, 'getActions'])->name('actions');
+        Route::get('/export', [App\Http\Controllers\Admin\AuditController::class, 'export'])->name('export');
+    });
+    
     // System Monitoring and Reports
     Route::get('/system', [App\Http\Controllers\Admin\SystemController::class, 'index'])->name('system.index');
     Route::get('/system/metrics', [App\Http\Controllers\Admin\SystemController::class, 'getMetrics'])->name('system.metrics');
@@ -284,7 +294,6 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::post('/system/payment-config', [App\Http\Controllers\Admin\SystemController::class, 'updatePaymentGatewayConfig'])->name('system.payment-config.update');
     Route::get('/system/audit-logs', [App\Http\Controllers\Admin\SystemController::class, 'getAuditLogs'])->name('system.audit-logs');
     Route::get('/system/health', [App\Http\Controllers\Admin\SystemController::class, 'getSystemHealth'])->name('system.health');
-    Route::get('/audit', function () { return view('admin.audit.index'); })->name('audit.index');
     
     // Monitoring routes
     Route::get('/monitoring', [App\Http\Controllers\Admin\MonitoringController::class, 'index'])->name('monitoring.index');

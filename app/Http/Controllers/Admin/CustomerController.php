@@ -27,7 +27,8 @@ class CustomerController extends Controller
      */
     public function getData(Request $request): JsonResponse
     {
-        $query = User::whereIn('role', ['customer', 'operator']);
+        $query = User::whereIn('role', ['customer', 'operator'])
+            ->with(['sipAccounts', 'callRecords']);
 
         // Search functionality
         if ($request->has('search') && !empty($request->search['value'])) {
@@ -40,6 +41,19 @@ class CustomerController extends Controller
             });
         }
 
+        // Advanced search filters
+        if ($request->filled('name_search')) {
+            $query->where('name', 'like', "%{$request->name_search}%");
+        }
+        
+        if ($request->filled('email_search')) {
+            $query->where('email', 'like', "%{$request->email_search}%");
+        }
+        
+        if ($request->filled('phone_search')) {
+            $query->where('phone', 'like', "%{$request->phone_search}%");
+        }
+
         // Filter by role
         if ($request->has('role_filter') && !empty($request->role_filter)) {
             $query->where('role', $request->role_filter);
@@ -48,6 +62,20 @@ class CustomerController extends Controller
         // Filter by account type
         if ($request->has('account_type_filter') && !empty($request->account_type_filter)) {
             $query->where('account_type', $request->account_type_filter);
+        }
+
+        // Filter by status
+        if ($request->has('status_filter') && !empty($request->status_filter)) {
+            $query->where('status', $request->status_filter);
+        }
+
+        // Filter by balance range
+        if ($request->filled('balance_min')) {
+            $query->where('balance', '>=', $request->balance_min);
+        }
+        
+        if ($request->filled('balance_max')) {
+            $query->where('balance', '<=', $request->balance_max);
         }
 
         // Filter by status

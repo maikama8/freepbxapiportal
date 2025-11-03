@@ -167,24 +167,7 @@
                             </a>
                         </p>
 
-                        <!-- Demo Credentials -->
-                        <div class="mt-4">
-                            <div class="alert alert-info">
-                                <h6 class="alert-heading mb-2">Demo Credentials:</h6>
-                                <div class="row">
-                                    <div class="col-6">
-                                        <strong>Admin:</strong><br>
-                                        <small>admin@voipplatform.com</small><br>
-                                        <small>admin123</small>
-                                    </div>
-                                    <div class="col-6">
-                                        <strong>Customer:</strong><br>
-                                        <small>john@example.com</small><br>
-                                        <small>customer123</small>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+
                     </div>
                 </div>
                 <!-- /Login -->

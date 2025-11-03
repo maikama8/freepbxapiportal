@@ -14,6 +14,7 @@ class MonitoringController extends Controller
 
     public function __construct(MonitoringService $monitoring)
     {
+        parent::__construct();
         $this->monitoring = $monitoring;
         $this->middleware(['auth', 'role:admin']);
     }

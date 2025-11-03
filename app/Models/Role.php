@@ -4,10 +4,29 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Role extends Model
 {
     use HasFactory;
+
+    protected $fillable = [
+        'name',
+        'display_name',
+        'description',
+        'permissions',
+        'is_active',
+        'is_system',
+        'created_by',
+        'updated_by'
+    ];
+
+    protected $casts = [
+        'permissions' => 'array',
+        'is_active' => 'boolean',
+        'is_system' => 'boolean'
+    ];
 
     // Define available roles as constants
     const ADMIN = 'admin';
@@ -168,5 +187,83 @@ class Role extends Model
             ->groupBy('role')
             ->pluck('count', 'role')
             ->toArray();
+    }
+
+    /**
+     * Relationship: Users with this role
+     */
+    public function users(): HasMany
+    {
+        return $this->hasMany(User::class, 'role', 'name');
+    }
+
+    /**
+     * Relationship: User who created this role
+     */
+    public function creator(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    /**
+     * Relationship: User who last updated this role
+     */
+    public function updater(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'updated_by');
+    }
+
+    /**
+     * Check if role has specific permission
+     */
+    public function hasPermission(string $permission): bool
+    {
+        return in_array($permission, $this->permissions ?? []);
+    }
+
+    /**
+     * Add permission to role
+     */
+    public function addPermission(string $permission): void
+    {
+        $permissions = $this->permissions ?? [];
+        if (!in_array($permission, $permissions)) {
+            $permissions[] = $permission;
+            $this->update(['permissions' => $permissions]);
+        }
+    }
+
+    /**
+     * Remove permission from role
+     */
+    public function removePermission(string $permission): void
+    {
+        $permissions = $this->permissions ?? [];
+        $permissions = array_filter($permissions, fn($p) => $p !== $permission);
+        $this->update(['permissions' => array_values($permissions)]);
+    }
+
+    /**
+     * Scope: Active roles only
+     */
+    public function scopeActive($query)
+    {
+        return $query->where('is_active', true);
+    }
+
+    /**
+     * Scope: Custom roles only (non-system)
+     */
+    public function scopeCustom($query)
+    {
+        return $query->where('is_system', false);
+    }
+
+    /**
+     * Scope: System roles only
+     */
+    public function scopeSystem($query)
+    {
+        return $query->where('is_system', true);
     }
 }

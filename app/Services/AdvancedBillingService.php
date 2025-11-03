@@ -42,6 +42,27 @@ class AdvancedBillingService
     }
 
     /**
+     * Get database-specific timestamp difference query
+     */
+    private function getTimestampDiffQuery(): string
+    {
+        $driver = config('database.default');
+        $connection = config("database.connections.{$driver}.driver");
+        
+        switch ($connection) {
+            case 'sqlite':
+                return 'AVG((julianday(end_time) - julianday(start_time)) * 86400) as avg_duration';
+            case 'mysql':
+            case 'mariadb':
+                return 'AVG(TIMESTAMPDIFF(SECOND, start_time, end_time)) as avg_duration';
+            case 'pgsql':
+                return 'AVG(EXTRACT(EPOCH FROM (end_time - start_time))) as avg_duration';
+            default:
+                return 'AVG((julianday(end_time) - julianday(start_time)) * 86400) as avg_duration';
+        }
+    }
+
+    /**
      * Set default billing increment
      */
     public function setDefaultBillingIncrement(string $increment): void
@@ -348,7 +369,7 @@ class AdvancedBillingService
                 ->pluck('count', 'billing_status')
                 ->toArray(),
             'average_call_duration' => CallRecord::whereNotNull('end_time')
-                ->selectRaw('AVG(TIMESTAMPDIFF(SECOND, start_time, end_time)) as avg_duration')
+                ->selectRaw($this->getTimestampDiffQuery())
                 ->value('avg_duration'),
             'top_destinations' => CallRecord::selectRaw('destination, COUNT(*) as call_count, SUM(cost) as total_cost')
                 ->groupBy('destination')
