@@ -129,7 +129,7 @@ class AutomatedCDRProcessing extends Command
             $endTime = now();
             
             // Fetch CDR records
-            $cdrRecords = $this->cdrService->getCDRRecords($startTime, $endTime, $batchSize * 2);
+            $cdrRecords = $this->cdrService->retrieveCDRData($startTime, $endTime, ['limit' => $batchSize * 2]);
             
             if (empty($cdrRecords)) {
                 $this->info('No new CDR records found.');

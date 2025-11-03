@@ -1,0 +1,128 @@
+# FreePBX VoIP Platform - cPanel Cron Job Setup
+# 
+# Instructions for cPanel users:
+# 1. Log into your cPanel
+# 2. Navigate to Advanced > Cron Jobs
+# 3. Add each job below as a separate cron job
+# 4. Replace /home/username/public_html with your actual path
+# 5. Replace /usr/bin/php with your server's PHP path (check with hosting provider)
+# 6. Set your email address for notifications
+
+# CRITICAL JOBS - These must be configured for the platform to function
+
+# Main Laravel Scheduler (REQUIRED - This runs all other scheduled tasks)
+# Minute: * | Hour: * | Day: * | Month: * | Weekday: *
+# Command:
+/usr/bin/php /home/username/public_html/artisan schedule:run
+
+# CDR Processing Backup (CRITICAL - Billing depends on this)
+# Minute: */5 | Hour: * | Day: * | Month: * | Weekday: *
+# Command:
+/usr/bin/php /home/username/public_html/artisan cdr:automated-processing --batch-size=50
+
+# FreePBX Sync Backup (CRITICAL - Service depends on this)
+# Minute: */30 | Hour: * | Day: * | Month: * | Weekday: *
+# Command:
+/usr/bin/php /home/username/public_html/artisan freepbx:automated-sync --sync-mode=incremental
+
+# Real-time Billing Backup (CRITICAL - Balance enforcement depends on this)
+# Minute: */2 | Hour: * | Day: * | Month: * | Weekday: *
+# Command:
+/usr/bin/php /home/username/public_html/artisan billing:monitor-realtime --terminate
+
+# System Health Check Backup (CRITICAL - Monitoring depends on this)
+# Minute: */5 | Hour: * | Day: * | Month: * | Weekday: *
+# Command:
+/usr/bin/php /home/username/public_html/artisan system:health-check --alert
+
+# IMPORTANT JOBS - These should be configured for optimal operation
+
+# Monthly DID Billing (IMPORTANT - Revenue depends on this)
+# Minute: 0 | Hour: 2 | Day: 1 | Month: * | Weekday: *
+# Command:
+/usr/bin/php /home/username/public_html/artisan billing:monthly-did-charges --suspend-insufficient
+
+# Low Balance Warnings (IMPORTANT - Customer service depends on this)
+# Minute: 0 | Hour: 9 | Day: * | Month: * | Weekday: *
+# Command:
+/usr/bin/php /home/username/public_html/artisan system:automated-maintenance --task=low-balance-warnings
+
+# Database Maintenance (IMPORTANT - Performance depends on this)
+# Minute: 0 | Hour: 2 | Day: * | Month: * | Weekday: *
+# Command:
+/usr/bin/php /home/username/public_html/artisan db:maintenance --cleanup --optimize
+
+# System Backup (CRITICAL - Data protection depends on this)
+# Minute: 0 | Hour: 3 | Day: * | Month: * | Weekday: *
+# Command:
+/usr/bin/php /home/username/public_html/artisan backup:system --compress --retention=30
+
+# Cron Job Health Monitor (CRITICAL - System reliability depends on this)
+# Minute: 0 | Hour: * | Day: * | Month: * | Weekday: *
+# Command:
+/usr/bin/php /home/username/public_html/artisan cron:health-monitor --alert --email=admin@yourdomain.com
+
+# OPTIONAL JOBS - These enhance functionality but are not critical
+
+# Kill Stuck Jobs (Recommended)
+# Minute: 15 | Hour: * | Day: * | Month: * | Weekday: *
+# Command:
+/usr/bin/php /home/username/public_html/artisan cron:monitor kill-stuck --max-runtime=120
+
+# Log Cleanup (Recommended)
+# Minute: 0 | Hour: 4 | Day: * | Month: * | Weekday: *
+# Command:
+/usr/bin/php /home/username/public_html/artisan cron:monitor cleanup --days=30
+
+# Performance Reports (Optional)
+# Minute: 0 | Hour: 5 | Day: * | Month: * | Weekday: 0
+# Command:
+/usr/bin/php /home/username/public_html/artisan cron:performance-report --days=7
+
+# Security Audit (Recommended)
+# Minute: 0 | Hour: 4 | Day: * | Month: * | Weekday: 0
+# Command:
+/usr/bin/php /home/username/public_html/artisan security:audit
+
+# Payment Gateway Check (Recommended)
+# Minute: */15 | Hour: * | Day: * | Month: * | Weekday: *
+# Command:
+/usr/bin/php /home/username/public_html/artisan payments:check-gateways
+
+# CDR Sync (Recommended)
+# Minute: */10 | Hour: * | Day: * | Month: * | Weekday: *
+# Command:
+/usr/bin/php /home/username/public_html/artisan cdr:sync
+
+# NOTES FOR CPANEL USERS:
+# 
+# 1. Email Notifications:
+#    - Set your email address in the cPanel cron jobs section
+#    - You'll receive emails when jobs fail or produce output
+#    - Consider creating a dedicated email for cron notifications
+#
+# 2. PHP Path:
+#    - Common paths: /usr/bin/php, /usr/local/bin/php, /opt/php81/bin/php
+#    - Check with your hosting provider for the correct path
+#    - Some hosts require version-specific paths like /opt/php81/bin/php
+#
+# 3. Project Path:
+#    - Replace /home/username/public_html with your actual path
+#    - Common patterns: /home/username/public_html, /home/username/domains/domain.com/public_html
+#    - Use the full absolute path to your Laravel project root
+#
+# 4. Resource Limits:
+#    - Some shared hosts have limits on cron job frequency
+#    - If you hit limits, prioritize the CRITICAL jobs
+#    - Consider upgrading to VPS/dedicated hosting for full functionality
+#
+# 5. Monitoring:
+#    - Check the cron job logs in cPanel regularly
+#    - Monitor your application logs in storage/logs/
+#    - Set up the health monitoring dashboard at /admin/cron-jobs
+#
+# 6. Troubleshooting:
+#    - Test commands manually via SSH first: php artisan schedule:run
+#    - Check file permissions: chmod +x artisan
+#    - Verify .env file exists and is readable
+#    - Ensure all Composer dependencies are installed

@@ -1,0 +1,80 @@
+# FreePBX VoIP Platform - Production Cron Job Configuration
+# Generated for production environment
+# 
+# IMPORTANT: Replace /path/to/project with your actual project path
+# IMPORTANT: Replace /usr/bin/php with your actual PHP path
+# IMPORTANT: Replace username with your actual username for email notifications
+#
+# To install: crontab production-crontab.txt
+# To verify: crontab -l
+
+# Set environment variables
+SHELL=/bin/bash
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+MAILTO=admin@yourdomain.com
+
+# Laravel Scheduler - Main entry point (CRITICAL - DO NOT DISABLE)
+* * * * * cd /path/to/project && /usr/bin/php artisan schedule:run >> /dev/null 2>&1
+
+# Critical Backup Jobs (Run independently for redundancy)
+# These provide backup execution in case the main scheduler fails
+
+# CDR Processing - Every 5 minutes (CRITICAL for billing)
+*/5 * * * * cd /path/to/project && /usr/bin/php artisan cdr:automated-processing --batch-size=50 --timeout=240 >> /var/log/cron-cdr.log 2>&1
+
+# FreePBX Synchronization - Every 30 minutes (CRITICAL for service)
+*/30 * * * * cd /path/to/project && /usr/bin/php artisan freepbx:automated-sync --sync-mode=incremental --batch-size=20 --timeout=1800 >> /var/log/cron-freepbx.log 2>&1
+
+# Real-time Billing Monitor - Every 2 minutes (CRITICAL for balance enforcement)
+*/2 * * * * cd /path/to/project && /usr/bin/php artisan billing:monitor-realtime --terminate --timeout=90 >> /var/log/cron-billing.log 2>&1
+
+# System Health Check - Every 5 minutes (CRITICAL for monitoring)
+*/5 * * * * cd /path/to/project && /usr/bin/php artisan system:health-check --alert --timeout=120 >> /var/log/cron-health.log 2>&1
+
+# Monthly DID Billing - 1st of month at 2 AM (CRITICAL for revenue)
+0 2 1 * * cd /path/to/project && /usr/bin/php artisan billing:monthly-did-charges --suspend-insufficient --timeout=3600 >> /var/log/cron-did-billing.log 2>&1
+
+# Low Balance Warnings - Daily at 9 AM (IMPORTANT for customer service)
+0 9 * * * cd /path/to/project && /usr/bin/php artisan system:automated-maintenance --task=low-balance-warnings --timeout=600 >> /var/log/cron-maintenance.log 2>&1
+
+# Database Maintenance - Daily at 2 AM (IMPORTANT for performance)
+0 2 * * * cd /path/to/project && /usr/bin/php artisan db:maintenance --cleanup --optimize --timeout=1800 >> /var/log/cron-db-maintenance.log 2>&1
+
+# System Backup - Daily at 3 AM (CRITICAL for data protection)
+0 3 * * * cd /path/to/project && /usr/bin/php artisan backup:system --compress --retention=30 --timeout=3600 >> /var/log/cron-backup.log 2>&1
+
+# Cron Job Monitoring - Every hour (CRITICAL for system reliability)
+0 * * * * cd /path/to/project && /usr/bin/php artisan cron:health-monitor --alert --email=admin@yourdomain.com --timeout=300 >> /var/log/cron-monitor.log 2>&1
+
+# Kill Stuck Jobs - Every hour (IMPORTANT for resource management)
+15 * * * * cd /path/to/project && /usr/bin/php artisan cron:monitor kill-stuck --max-runtime=120 --timeout=300 >> /var/log/cron-cleanup.log 2>&1
+
+# Log Rotation and Cleanup - Daily at 4 AM (IMPORTANT for disk space)
+0 4 * * * cd /path/to/project && /usr/bin/php artisan cron:monitor cleanup --days=30 --timeout=600 >> /var/log/cron-cleanup.log 2>&1
+
+# Performance Report Generation - Weekly on Sunday at 5 AM (USEFUL for optimization)
+0 5 * * 0 cd /path/to/project && /usr/bin/php artisan cron:performance-report --days=7 --output=storage/app/reports/weekly-performance.json --timeout=900 >> /var/log/cron-reports.log 2>&1
+
+# Security Audit - Weekly on Sunday at 4 AM (IMPORTANT for security)
+0 4 * * 0 cd /path/to/project && /usr/bin/php artisan security:audit --timeout=1800 >> /var/log/cron-security.log 2>&1
+
+# Queue Worker Health Check - Every minute (IMPORTANT for background jobs)
+* * * * * cd /path/to/project && /usr/bin/php artisan queue:work --stop-when-empty --timeout=50 >> /var/log/cron-queue.log 2>&1
+
+# Payment Gateway Status Check - Every 15 minutes (IMPORTANT for revenue)
+*/15 * * * * cd /path/to/project && /usr/bin/php artisan payments:check-gateways --timeout=300 >> /var/log/cron-payments.log 2>&1
+
+# CDR Sync from FreePBX - Every 10 minutes (IMPORTANT for call records)
+*/10 * * * * cd /path/to/project && /usr/bin/php artisan cdr:sync --timeout=600 >> /var/log/cron-cdr-sync.log 2>&1
+
+# Generate Monthly Reports - 1st of month at 6 AM (USEFUL for business intelligence)
+0 6 1 * * cd /path/to/project && /usr/bin/php artisan reports:generate-monthly --timeout=1800 >> /var/log/cron-reports.log 2>&1
+
+# Cache Warming - Daily at 5 AM (USEFUL for performance)
+0 5 * * * cd /path/to/project && /usr/bin/php artisan config:cache && /usr/bin/php artisan route:cache && /usr/bin/php artisan view:cache >> /var/log/cron-cache.log 2>&1
+
+# Disk Space Monitoring - Every hour (CRITICAL for system stability)
+0 * * * * df -h | awk '$5 > 90 {print "ALERT: Disk " $1 " is " $5 " full on " strftime("%Y-%m-%d %H:%M:%S")}' | logger -t disk-monitor
+
+# Process Monitoring - Every 5 minutes (IMPORTANT for system health)
+*/5 * * * * ps aux | awk '$3 > 80.0 || $4 > 80.0 {print "ALERT: High resource usage - PID:" $2 " CPU:" $3 "% MEM:" $4 "% CMD:" $11}' | head -5 | logger -t process-monitor

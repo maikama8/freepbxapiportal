@@ -206,6 +206,55 @@ return [
             'replace_placeholders' => true,
         ],
 
+        // Advanced Feature Logging Channels
+        'billing' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/billing.log'),
+            'level' => env('LOG_LEVEL', 'debug'),
+            'days' => env('LOG_BILLING_DAYS', 90),
+            'replace_placeholders' => true,
+        ],
+
+        'did' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/did-management.log'),
+            'level' => env('LOG_LEVEL', 'debug'),
+            'days' => env('LOG_DID_DAYS', 60),
+            'replace_placeholders' => true,
+        ],
+
+        'realtime_billing' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/realtime-billing.log'),
+            'level' => env('LOG_LEVEL', 'debug'),
+            'days' => env('LOG_REALTIME_BILLING_DAYS', 30),
+            'replace_placeholders' => true,
+        ],
+
+        'api' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/api.log'),
+            'level' => env('LOG_LEVEL', 'debug'),
+            'days' => env('LOG_API_DAYS', 30),
+            'replace_placeholders' => true,
+        ],
+
+        'freepbx' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/freepbx-integration.log'),
+            'level' => env('LOG_LEVEL', 'debug'),
+            'days' => env('LOG_FREEPBX_DAYS', 30),
+            'replace_placeholders' => true,
+        ],
+
+        'payments' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/payments.log'),
+            'level' => env('LOG_LEVEL', 'debug'),
+            'days' => env('LOG_PAYMENTS_DAYS', 365),
+            'replace_placeholders' => true,
+        ],
+
     ],
 
 ];

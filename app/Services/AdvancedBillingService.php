@@ -85,18 +85,33 @@ class AdvancedBillingService
     /**
      * Parse billing increment string to configuration array
      */
-    protected function parseBillingIncrement(string $increment): array
+    protected function parseBillingIncrement($increment): array
     {
+        // Handle integer values (convert to string for lookup)
+        if (is_int($increment)) {
+            $increment = (string) $increment;
+        }
+        
         if (array_key_exists($increment, self::BILLING_INCREMENTS)) {
             return self::BILLING_INCREMENTS[$increment];
         }
 
         // Try to parse custom format like "30/60"
-        if (preg_match('/^(\d+)\/(\d+)$/', $increment, $matches)) {
+        if (is_string($increment) && preg_match('/^(\d+)\/(\d+)$/', $increment, $matches)) {
             return [
                 'initial' => (int) $matches[1],
                 'subsequent' => (int) $matches[2],
                 'label' => "{$matches[1]} seconds / {$matches[2]} seconds"
+            ];
+        }
+
+        // For simple integer values, use as both initial and subsequent
+        if (is_numeric($increment)) {
+            $value = (int) $increment;
+            return [
+                'initial' => $value,
+                'subsequent' => $value,
+                'label' => "{$value} seconds / {$value} seconds"
             ];
         }
 
@@ -187,7 +202,12 @@ class AdvancedBillingService
      */
     protected function calculateCostFromCountryRate(CountryRate $countryRate, string $destination, int $durationSeconds): array
     {
-        $billingConfig = $this->getBillingIncrementForDestination($destination);
+        // Use the country rate's billing increment directly if available
+        if ($countryRate->billing_increment) {
+            $billingConfig = $this->parseBillingIncrement($countryRate->billing_increment);
+        } else {
+            $billingConfig = $this->getBillingIncrementForDestination($destination);
+        }
         $minimumDuration = $countryRate->minimum_duration ?? 0;
         
         $billableDuration = $this->calculateBillableDuration(
