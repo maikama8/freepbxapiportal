@@ -26,8 +26,13 @@ class AutoLogout {
     isAuthenticated() {
         // Check if we're on a page that requires authentication
         // This is a simple check - you might want to make it more robust
-        return document.querySelector('meta[name="csrf-token"]') !== null &&
-               !window.location.pathname.includes('/login');
+        const hasCSRF = document.querySelector('meta[name="csrf-token"]') !== null;
+        const notOnLoginPage = !window.location.pathname.includes('/login') && 
+                              !window.location.pathname.includes('/register');
+        const hasAuthenticatedContent = document.querySelector('.layout-wrapper') !== null ||
+                                       document.querySelector('[data-user-authenticated]') !== null;
+        
+        return hasCSRF && notOnLoginPage && (hasAuthenticatedContent || window.location.pathname.includes('/admin') || window.location.pathname.includes('/customer'));
     }
     
     resetTimer() {
@@ -167,18 +172,71 @@ class AutoLogout {
             modal.remove();
         }
         
-        // Make a request to refresh the session
+        // Try to refresh the session
+        this.refreshSession();
+    }
+    
+    refreshSession() {
+        const csrfToken = document.querySelector('meta[name="csrf-token"]');
+        if (!csrfToken) {
+            console.warn('CSRF token not found, using fallback method');
+            this.fallbackRefresh();
+            return;
+        }
+
         fetch('/api/refresh-session', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                'X-CSRF-TOKEN': csrfToken.getAttribute('content'),
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            credentials: 'same-origin'
+        }).then(response => {
+            if (response.ok) {
+                return response.json();
+            } else if (response.status === 401) {
+                // Session already expired
+                throw new Error('Session expired');
+            } else if (response.status === 405) {
+                // Method not allowed - use fallback
+                console.warn('Session refresh route not available, using fallback');
+                this.fallbackRefresh();
+                return;
+            } else {
+                throw new Error(`HTTP ${response.status}`);
             }
-        }).then(() => {
-            // Reset the timer
-            this.resetTimer();
+        }).then(data => {
+            if (data && data.status === 'success') {
+                // Reset the timer
+                this.resetTimer();
+            } else {
+                throw new Error('Invalid response');
+            }
+        }).catch(error => {
+            console.warn('Session refresh failed:', error.message);
+            // Try fallback method
+            this.fallbackRefresh();
+        });
+    }
+    
+    fallbackRefresh() {
+        // Fallback: make a simple request to any authenticated endpoint
+        // This will trigger session activity without needing a special endpoint
+        fetch(window.location.href, {
+            method: 'HEAD',
+            credentials: 'same-origin'
+        }).then(response => {
+            if (response.ok || response.status === 200) {
+                // Reset the timer
+                this.resetTimer();
+            } else {
+                // If even this fails, logout
+                this.logout();
+            }
         }).catch(() => {
-            // If refresh fails, logout
+            // If fallback fails, logout
             this.logout();
         });
     }
@@ -193,9 +251,9 @@ class AutoLogout {
         // Show logout message
         this.showLogoutMessage();
         
-        // Redirect to logout
+        // Perform logout via form submission
         setTimeout(() => {
-            window.location.href = '/logout';
+            this.performLogout();
         }, 2000);
     }
     
@@ -224,6 +282,28 @@ class AutoLogout {
         `;
         
         document.body.appendChild(message);
+    }
+    
+    performLogout() {
+        // Create a form to submit logout request
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '/logout';
+        form.style.display = 'none';
+        
+        // Add CSRF token
+        const csrfToken = document.querySelector('meta[name="csrf-token"]');
+        if (csrfToken) {
+            const tokenInput = document.createElement('input');
+            tokenInput.type = 'hidden';
+            tokenInput.name = '_token';
+            tokenInput.value = csrfToken.getAttribute('content');
+            form.appendChild(tokenInput);
+        }
+        
+        // Add to body and submit
+        document.body.appendChild(form);
+        form.submit();
     }
 }
 

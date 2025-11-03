@@ -19,14 +19,11 @@ Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 Route::get('/register', [RegisterController::class, 'showRegistrationForm'])->name('register');
 Route::post('/register', [RegisterController::class, 'register']);
 
-// Session refresh route for auto-logout functionality
-Route::post('/api/refresh-session', function () {
-    if (auth()->check()) {
-        session(['last_activity' => time()]);
-        return response()->json(['status' => 'success']);
-    }
-    return response()->json(['status' => 'error'], 401);
-})->middleware('auth');
+// Session management routes for auto-logout functionality
+Route::middleware('auth')->group(function () {
+    Route::post('/api/refresh-session', [App\Http\Controllers\SessionController::class, 'refreshSession'])->name('session.refresh');
+    Route::get('/api/session-status', [App\Http\Controllers\SessionController::class, 'checkSession'])->name('session.status');
+});
 
 // Protected routes
 Route::middleware(['auth'])->group(function () {

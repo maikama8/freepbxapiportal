@@ -1,17 +1,25 @@
 {
-    "$schema": "https://json.schemastore.org/package.json",
-    "private": true,
-    "type": "module",
-    "scripts": {
-        "build": "vite build",
-        "dev": "vite"
-    },
-    "devDependencies": {
-        "@tailwindcss/vite": "^4.0.0",
-        "axios": "^1.11.0",
-        "concurrently": "^9.0.1",
-        "laravel-vite-plugin": "^2.0.0",
-        "tailwindcss": "^4.0.0",
-        "vite": "^7.0.7"
-    }
+  "name": "freepbx-ssl-dev-server",
+  "version": "1.0.0",
+  "description": "SSL Development Server for FreePBX VoIP Platform",
+  "main": "ssl-proxy.js",
+  "scripts": {
+    "ssl-server": "node ssl-proxy.js",
+    "dev": "npm run ssl-server",
+    "setup-ssl": "openssl req -x509 -newkey rsa:4096 -keyout storage/ssl/key.pem -out storage/ssl/cert.pem -days 365 -nodes -subj '/C=US/ST=CA/L=San Francisco/O=FreePBX VoIP/OU=Development/CN=freepbx-dev.local'"
+  },
+  "dependencies": {
+    "http-proxy": "^1.18.1"
+  },
+  "devDependencies": {},
+  "keywords": [
+    "ssl",
+    "https",
+    "laravel",
+    "freepbx",
+    "development",
+    "proxy"
+  ],
+  "author": "FreePBX VoIP Platform",
+  "license": "MIT"
 }
