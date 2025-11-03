@@ -2,19 +2,31 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Customer\CustomerController;
 use App\Http\Controllers\Customer\CallController;
 use App\Http\Controllers\Customer\PaymentController as CustomerPaymentController;
 
-// Public routes
+// Public routes - redirect to login since we have no public frontend
 Route::get('/', function () {
-    return view('welcome');
+    return redirect()->route('login');
 });
 
 // Authentication routes
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [LoginController::class, 'login']);
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
+Route::get('/register', [RegisterController::class, 'showRegistrationForm'])->name('register');
+Route::post('/register', [RegisterController::class, 'register']);
+
+// Session refresh route for auto-logout functionality
+Route::post('/api/refresh-session', function () {
+    if (auth()->check()) {
+        session(['last_activity' => time()]);
+        return response()->json(['status' => 'success']);
+    }
+    return response()->json(['status' => 'error'], 401);
+})->middleware('auth');
 
 // Protected routes
 Route::middleware(['auth'])->group(function () {
@@ -25,6 +37,15 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/account-settings', [App\Http\Controllers\Customer\CustomerController::class, 'accountSettings'])->name('account-settings');
         Route::put('/account-settings', [App\Http\Controllers\Customer\CustomerController::class, 'updateAccountSettings'])->name('account-settings.update');
         Route::get('/balance-history', [App\Http\Controllers\Customer\CustomerController::class, 'balanceHistory'])->name('balance-history');
+        
+        // SIP Account management routes
+        Route::prefix('sip-accounts')->name('sip-accounts.')->group(function () {
+            Route::get('/', [App\Http\Controllers\Customer\SipAccountController::class, 'index'])->name('index');
+            Route::get('/{sipAccount}', [App\Http\Controllers\Customer\SipAccountController::class, 'show'])->name('show');
+            Route::get('/{sipAccount}/change-password', [App\Http\Controllers\Customer\SipAccountController::class, 'editPassword'])->name('edit-password');
+            Route::put('/{sipAccount}/change-password', [App\Http\Controllers\Customer\SipAccountController::class, 'updatePassword'])->name('update-password');
+            Route::put('/{sipAccount}/settings', [App\Http\Controllers\Customer\SipAccountController::class, 'updateSettings'])->name('update-settings');
+        });
         
         // AJAX routes
         Route::get('/active-calls-count', function () {
@@ -68,14 +89,17 @@ Route::middleware(['auth'])->group(function () {
         })->name('password.update');
     });
 
-    // Legacy dashboard route (redirect to customer dashboard)
+    // Legacy dashboard route (redirect based on user role)
     Route::get('/dashboard', function () {
         if (auth()->user()->isCustomer()) {
             return redirect()->route('customer.dashboard');
         } elseif (auth()->user()->isAdmin()) {
             return redirect()->route('admin.dashboard');
-        } else {
+        } elseif (auth()->user()->isOperator()) {
             return redirect()->route('operator.dashboard');
+        } else {
+            // Fallback to customer dashboard for unknown roles
+            return redirect()->route('customer.dashboard');
         }
     })->name('dashboard');
 
@@ -86,7 +110,8 @@ Route::middleware(['auth'])->group(function () {
 
     // Operator dashboard
     Route::get('/operator/dashboard', function () {
-        return view('operator.dashboard');
+        // For now, redirect operators to admin dashboard with limited access
+        return redirect()->route('admin.dashboard');
     })->middleware('role:operator')->name('operator.dashboard');
 });
 
@@ -104,6 +129,17 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::post('/customers/{customer}/adjust-balance', [App\Http\Controllers\Admin\CustomerController::class, 'adjustBalance'])->name('customers.adjust-balance');
     Route::post('/customers/{customer}/reset-password', [App\Http\Controllers\Admin\CustomerController::class, 'resetPassword'])->name('customers.reset-password');
     
+    // SIP Account Management for Customers
+    Route::prefix('customers/{user}/sip-accounts')->name('customers.sip-accounts.')->group(function () {
+        Route::get('/', [App\Http\Controllers\Admin\SipAccountController::class, 'index'])->name('index');
+        Route::get('/create', [App\Http\Controllers\Admin\SipAccountController::class, 'create'])->name('create');
+        Route::post('/', [App\Http\Controllers\Admin\SipAccountController::class, 'store'])->name('store');
+        Route::get('/{sipAccount}/edit', [App\Http\Controllers\Admin\SipAccountController::class, 'edit'])->name('edit');
+        Route::put('/{sipAccount}', [App\Http\Controllers\Admin\SipAccountController::class, 'update'])->name('update');
+        Route::delete('/{sipAccount}', [App\Http\Controllers\Admin\SipAccountController::class, 'destroy'])->name('destroy');
+        Route::post('/{sipAccount}/reset-password', [App\Http\Controllers\Admin\SipAccountController::class, 'resetPassword'])->name('reset-password');
+    });
+    
     // Rate Management
     Route::get('/rates', [App\Http\Controllers\Admin\RateController::class, 'index'])->name('rates.index');
     Route::get('/rates/data', [App\Http\Controllers\Admin\RateController::class, 'getData'])->name('rates.data');
@@ -115,10 +151,12 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::get('/rates/export', [App\Http\Controllers\Admin\RateController::class, 'export'])->name('rates.export');
     Route::get('/rates/history/{prefix}', [App\Http\Controllers\Admin\RateController::class, 'history'])->name('rates.history');
     Route::post('/rates/test', [App\Http\Controllers\Admin\RateController::class, 'testRate'])->name('rates.test');
+    // Placeholder routes for missing sections
     Route::get('/calls', function () { return view('admin.calls.index'); })->name('calls.index');
     Route::get('/billing', function () { return view('admin.billing.index'); })->name('billing.index');
     Route::get('/payments', function () { return view('admin.payments.index'); })->name('payments.index');
     Route::get('/reports', function () { return view('admin.reports.index'); })->name('reports.index');
+    Route::get('/audit', function () { return view('admin.audit.index'); })->name('audit.index');
     // System Monitoring and Reports
     Route::get('/system', [App\Http\Controllers\Admin\SystemController::class, 'index'])->name('system.index');
     Route::get('/system/metrics', [App\Http\Controllers\Admin\SystemController::class, 'getMetrics'])->name('system.metrics');
@@ -136,6 +174,13 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::get('/monitoring/performance', [App\Http\Controllers\Admin\MonitoringController::class, 'performance'])->name('monitoring.performance');
     Route::get('/monitoring/logs', [App\Http\Controllers\Admin\MonitoringController::class, 'logs'])->name('monitoring.logs');
     Route::post('/monitoring/logs/clear', [App\Http\Controllers\Admin\MonitoringController::class, 'clearLogs'])->name('monitoring.logs.clear');
+    
+    // System settings
+    Route::get('/settings', [\App\Http\Controllers\Admin\SystemSettingsController::class, 'index'])->name('settings');
+    Route::put('/settings', [\App\Http\Controllers\Admin\SystemSettingsController::class, 'update'])->name('settings.update');
+    Route::post('/settings/test-freepbx', [\App\Http\Controllers\Admin\SystemSettingsController::class, 'testFreepbxConnection'])->name('settings.test-freepbx');
+    Route::post('/settings/sip-status', [\App\Http\Controllers\Admin\SystemSettingsController::class, 'getSipServerStatus'])->name('settings.sip-status');
+    Route::post('/settings/reset', [\App\Http\Controllers\Admin\SystemSettingsController::class, 'resetToDefaults'])->name('settings.reset');
 });
 
 Route::middleware(['auth', 'role:customer,operator'])->prefix('calls')->group(function () {

@@ -1,4 +1,4 @@
-@extends('layouts.admin')
+@extends('layouts.sneat-admin')
 
 @section('title', 'Customer Management')
 
@@ -9,7 +9,7 @@
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h2>Customer Management</h2>
                 <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createCustomerModal">
-                    <i class="fas fa-plus"></i> Add New Customer
+                    <i class="bx bx-plus"></i> Add New Customer
                 </button>
             </div>
 
@@ -362,16 +362,16 @@ $(document).ready(function() {
                     return `
                         <div class="btn-group" role="group">
                             <button type="button" class="btn btn-sm btn-outline-primary" onclick="viewCustomer(${data})" title="View Details">
-                                <i class="fas fa-eye"></i>
+                                <i class="bx bx-show"></i>
                             </button>
                             <button type="button" class="btn btn-sm btn-outline-success" onclick="adjustBalance(${data})" title="Adjust Balance">
-                                <i class="fas fa-dollar-sign"></i>
+                                <i class="bx bx-dollar"></i>
                             </button>
                             <button type="button" class="btn btn-sm btn-outline-warning" onclick="resetPassword(${data})" title="Reset Password">
-                                <i class="fas fa-key"></i>
+                                <i class="bx bx-key"></i>
                             </button>
                             <button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteCustomer(${data})" title="Delete">
-                                <i class="fas fa-trash"></i>
+                                <i class="bx bx-trash"></i>
                             </button>
                         </div>
                     `;

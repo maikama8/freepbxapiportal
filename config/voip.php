@@ -12,6 +12,7 @@ return [
     */
 
     'freepbx' => [
+        // API Configuration
         'api_url' => env('FREEPBX_API_URL', 'http://localhost'),
         'username' => env('FREEPBX_API_USERNAME'),
         'password' => env('FREEPBX_API_PASSWORD'),
@@ -19,6 +20,31 @@ return [
         'timeout' => env('FREEPBX_API_TIMEOUT', 30),
         'retry_attempts' => env('FREEPBX_API_RETRY_ATTEMPTS', 3),
         'retry_delay' => env('FREEPBX_API_RETRY_DELAY', 1000), // milliseconds
+        
+        // Database Configuration for CDR access
+        'database' => [
+            'host' => env('FREEPBX_DB_HOST', 'localhost'),
+            'port' => env('FREEPBX_DB_PORT', 3306),
+            'database' => env('FREEPBX_DB_DATABASE', 'asteriskcdrdb'),
+            'username' => env('FREEPBX_DB_USERNAME'),
+            'password' => env('FREEPBX_DB_PASSWORD'),
+        ],
+        
+        // SIP Configuration
+        'sip' => [
+            'domain' => env('FREEPBX_SIP_DOMAIN', 'localhost'),
+            'port' => env('FREEPBX_SIP_PORT', 5060),
+            'transport' => env('FREEPBX_SIP_TRANSPORT', 'udp'),
+            'context' => env('FREEPBX_SIP_CONTEXT', 'from-internal'),
+        ],
+        
+        // Extension Configuration
+        'extensions' => [
+            'start_range' => env('FREEPBX_EXT_START_RANGE', 2000),
+            'end_range' => env('FREEPBX_EXT_END_RANGE', 9999),
+            'admin_range_start' => env('FREEPBX_ADMIN_EXT_START', 1000),
+            'admin_range_end' => env('FREEPBX_ADMIN_EXT_END', 1999),
+        ],
     ],
 
     /*

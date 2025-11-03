@@ -125,7 +125,19 @@
                         <li class="nav-item">
                             <a class="nav-link {{ request()->routeIs('admin.system.*') ? 'active' : '' }}" 
                                href="{{ route('admin.system.index') }}">
-                                <i class="fas fa-cog"></i> System Settings
+                                <i class="fas fa-server"></i> System Information
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('admin.settings*') ? 'active' : '' }}" 
+                               href="{{ route('admin.settings') }}">
+                                <i class="fas fa-cogs"></i> System Settings
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('admin.monitoring.*') ? 'active' : '' }}" 
+                               href="{{ route('admin.monitoring.index') }}">
+                                <i class="fas fa-chart-line"></i> Monitoring
                             </a>
                         </li>
                         <li class="nav-item">

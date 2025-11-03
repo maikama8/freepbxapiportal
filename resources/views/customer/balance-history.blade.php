@@ -1,4 +1,4 @@
-@extends('layouts.customer')
+@extends('layouts.sneat-customer')
 
 @section('title', 'Balance History')
 
@@ -8,7 +8,7 @@
         <div class="col-12">
             <div class="card">
                 <div class="card-header">
-                    <h5><i class="fas fa-receipt"></i> Balance History</h5>
+                    <h5><i class="bx bx-receipt"></i> Balance History</h5>
                 </div>
                 <div class="card-body">
                     <!-- Filters -->
@@ -35,7 +35,7 @@
                             <label class="form-label">&nbsp;</label>
                             <div class="d-grid">
                                 <button type="submit" class="btn btn-primary">
-                                    <i class="fas fa-search"></i> Filter
+                                    <i class="bx bx-search"></i> Filter
                                 </button>
                             </div>
                         </div>
@@ -43,7 +43,7 @@
                             <label class="form-label">&nbsp;</label>
                             <div class="d-grid">
                                 <a href="{{ route('customer.balance-history') }}" class="btn btn-outline-secondary">
-                                    <i class="fas fa-times"></i> Clear
+                                    <i class="bx bx-x"></i> Clear
                                 </a>
                             </div>
                         </div>
@@ -190,7 +190,7 @@
                         </div>
                     @else
                         <div class="text-center text-muted py-5">
-                            <i class="fas fa-receipt fa-4x mb-3"></i>
+                            <i class="bx bx-receipt bx-lg mb-3"></i>
                             <h5>No transactions found</h5>
                             <p>
                                 @if(request()->hasAny(['date_from', 'date_to', 'type']))

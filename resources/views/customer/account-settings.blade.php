@@ -1,4 +1,4 @@
-@extends('layouts.customer')
+@extends('layouts.sneat-customer')
 
 @section('title', 'Account Settings')
 
@@ -8,7 +8,7 @@
         <div class="col-md-8">
             <div class="card">
                 <div class="card-header">
-                    <h5><i class="fas fa-user-cog"></i> Account Settings</h5>
+                    <h5><i class="bx bx-user-circle"></i> Account Settings</h5>
                 </div>
                 <div class="card-body">
                     @if(session('success'))
@@ -96,10 +96,10 @@
 
                         <div class="mb-3">
                             <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-save"></i> Update Settings
+                                <i class="bx bx-save"></i> Update Settings
                             </button>
                             <a href="{{ route('customer.dashboard') }}" class="btn btn-secondary">
-                                <i class="fas fa-arrow-left"></i> Back to Dashboard
+                                <i class="bx bx-arrow-back"></i> Back to Dashboard
                             </a>
                         </div>
                     </form>
@@ -111,7 +111,7 @@
             <!-- Account Information -->
             <div class="card">
                 <div class="card-header">
-                    <h5><i class="fas fa-info-circle"></i> Account Information</h5>
+                    <h5><i class="bx bx-info-circle"></i> Account Information</h5>
                 </div>
                 <div class="card-body">
                     <table class="table table-sm">
@@ -159,18 +159,59 @@
                 </div>
             </div>
 
+            <!-- SIP Accounts Section -->
+            <div class="card mt-3">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5><i class="bx bx-phone"></i> SIP Accounts</h5>
+                    <a href="{{ route('customer.sip-accounts.index') }}" class="btn btn-sm btn-outline-primary">
+                        <i class="bx bx-cog"></i> Manage
+                    </a>
+                </div>
+                <div class="card-body">
+                    @if($user->sipAccounts->count() > 0)
+                        @foreach($user->sipAccounts->take(2) as $sipAccount)
+                            <div class="d-flex justify-content-between align-items-center mb-2 p-2 border rounded">
+                                <div>
+                                    <div class="fw-semibold">{{ $sipAccount->sip_username }}</div>
+                                    <small class="text-muted">{{ $sipAccount->display_name }}</small>
+                                    @if($sipAccount->is_primary)
+                                        <span class="badge bg-primary ms-1">Primary</span>
+                                    @endif
+                                </div>
+                                <span class="badge bg-{{ $sipAccount->status === 'active' ? 'success' : 'secondary' }}">
+                                    {{ ucfirst($sipAccount->status) }}
+                                </span>
+                            </div>
+                        @endforeach
+                        
+                        @if($user->sipAccounts->count() > 2)
+                            <div class="text-center mt-2">
+                                <small class="text-muted">
+                                    +{{ $user->sipAccounts->count() - 2 }} more accounts
+                                </small>
+                            </div>
+                        @endif
+                    @else
+                        <div class="text-center py-3">
+                            <i class="bx bx-phone text-muted display-6"></i>
+                            <div class="text-muted">No SIP accounts</div>
+                        </div>
+                    @endif
+                </div>
+            </div>
+
             <!-- Security Settings -->
             <div class="card mt-3">
                 <div class="card-header">
-                    <h5><i class="fas fa-shield-alt"></i> Security</h5>
+                    <h5><i class="bx bx-shield"></i> Security</h5>
                 </div>
                 <div class="card-body">
                     <div class="d-grid gap-2">
                         <button type="button" class="btn btn-outline-warning" data-bs-toggle="modal" data-bs-target="#changePasswordModal">
-                            <i class="fas fa-key"></i> Change Password
+                            <i class="bx bx-key"></i> Change Password
                         </button>
                         <button type="button" class="btn btn-outline-info">
-                            <i class="fas fa-mobile-alt"></i> Two-Factor Auth
+                            <i class="bx bx-mobile"></i> Two-Factor Auth
                         </button>
                     </div>
                     

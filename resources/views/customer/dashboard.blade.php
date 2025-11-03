@@ -1,4 +1,4 @@
-@extends('layouts.customer')
+@extends('layouts.sneat-customer')
 
 @section('title', 'Dashboard')
 
@@ -16,7 +16,7 @@
                             <small>{{ ucfirst($user->account_type) }} Account</small>
                         </div>
                         <div class="align-self-center">
-                            <i class="fas fa-wallet fa-2x"></i>
+                            <i class="bx bx-wallet bx-lg"></i>
                         </div>
                     </div>
                 </div>
@@ -33,7 +33,7 @@
                             <small>Spent: ${{ number_format($stats['total_spent_today'], 2) }}</small>
                         </div>
                         <div class="align-self-center">
-                            <i class="fas fa-phone fa-2x"></i>
+                            <i class="bx bx-phone bx-lg"></i>
                         </div>
                     </div>
                 </div>
@@ -50,7 +50,7 @@
                             <small>Spent: ${{ number_format($stats['total_spent_month'], 2) }}</small>
                         </div>
                         <div class="align-self-center">
-                            <i class="fas fa-chart-line fa-2x"></i>
+                            <i class="bx bx-line-chart bx-lg"></i>
                         </div>
                     </div>
                 </div>
@@ -67,7 +67,7 @@
                             <small>{{ $user->status === 'active' ? 'Online' : ucfirst($user->status) }}</small>
                         </div>
                         <div class="align-self-center">
-                            <i class="fas fa-{{ $stats['active_calls'] > 0 ? 'phone-volume' : 'phone-slash' }} fa-2x"></i>
+                            <i class="bx bx-{{ $stats['active_calls'] > 0 ? 'phone-call' : 'phone-off' }} bx-lg"></i>
                         </div>
                     </div>
                 </div>
@@ -80,30 +80,81 @@
         <div class="col-md-4">
             <div class="card">
                 <div class="card-header">
-                    <h5><i class="fas fa-bolt"></i> Quick Actions</h5>
+                    <h5><i class="bx bx-zap"></i> Quick Actions</h5>
                 </div>
                 <div class="card-body">
                     <div class="d-grid gap-2">
                         <a href="{{ route('customer.calls.make') }}" class="btn btn-primary">
-                            <i class="fas fa-phone"></i> Make a Call
+                            <i class="bx bx-phone"></i> Make a Call
                         </a>
                         <a href="{{ route('customer.payments.add-funds') }}" class="btn btn-success">
-                            <i class="fas fa-plus-circle"></i> Add Funds
+                            <i class="bx bx-plus-circle"></i> Add Funds
                         </a>
                         <a href="{{ route('customer.call-history') }}" class="btn btn-info">
-                            <i class="fas fa-history"></i> View Call History
+                            <i class="bx bx-history"></i> View Call History
                         </a>
                         <a href="{{ route('customer.account-settings') }}" class="btn btn-secondary">
-                            <i class="fas fa-cog"></i> Account Settings
+                            <i class="bx bx-cog"></i> Account Settings
                         </a>
                     </div>
+                </div>
+            </div>
+
+            <!-- SIP Account Information -->
+            <div class="card mt-3">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5><i class="bx bx-phone"></i> SIP Account</h5>
+                    <a href="{{ route('customer.sip-accounts.index') }}" class="btn btn-sm btn-outline-primary">
+                        <i class="bx bx-cog"></i> Manage
+                    </a>
+                </div>
+                <div class="card-body">
+                    @if($user->primarySipAccount)
+                        @php $primarySip = $user->primarySipAccount @endphp
+                        <div class="mb-2">
+                            <small class="text-muted">SIP Username:</small>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <strong>{{ $primarySip->sip_username }}</strong>
+                                <button class="btn btn-sm btn-outline-secondary" onclick="copyToClipboard('{{ $primarySip->sip_username }}')">
+                                    <i class="bx bx-copy"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="mb-2">
+                            <small class="text-muted">SIP Server:</small>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span>{{ $primarySip->sip_server }}</span>
+                                <button class="btn btn-sm btn-outline-secondary" onclick="copyToClipboard('{{ $primarySip->sip_server }}')">
+                                    <i class="bx bx-copy"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="mb-2">
+                            <small class="text-muted">Status:</small>
+                            <span class="badge bg-{{ $primarySip->status === 'active' ? 'success' : 'secondary' }}">
+                                {{ ucfirst($primarySip->status) }}
+                            </span>
+                        </div>
+                        @if($user->sipAccounts->count() > 1)
+                            <div class="text-center mt-2">
+                                <small class="text-muted">
+                                    +{{ $user->sipAccounts->count() - 1 }} more accounts
+                                </small>
+                            </div>
+                        @endif
+                    @else
+                        <div class="text-center py-2">
+                            <i class="bx bx-phone text-muted"></i>
+                            <div class="text-muted small">No SIP account configured</div>
+                        </div>
+                    @endif
                 </div>
             </div>
 
             <!-- Account Information -->
             <div class="card mt-3">
                 <div class="card-header">
-                    <h5><i class="fas fa-user"></i> Account Information</h5>
+                    <h5><i class="bx bx-user"></i> Account Information</h5>
                 </div>
                 <div class="card-body">
                     <table class="table table-sm">
@@ -149,7 +200,7 @@
             <!-- Recent Calls -->
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5><i class="fas fa-phone"></i> Recent Calls</h5>
+                    <h5><i class="bx bx-phone"></i> Recent Calls</h5>
                     <a href="{{ route('customer.call-history') }}" class="btn btn-sm btn-outline-primary">View All</a>
                 </div>
                 <div class="card-body">
@@ -184,7 +235,7 @@
                         </div>
                     @else
                         <div class="text-center text-muted py-4">
-                            <i class="fas fa-phone-slash fa-3x mb-3"></i>
+                            <i class="bx bx-phone-off bx-lg mb-3"></i>
                             <p>No calls made yet. <a href="{{ route('customer.calls.make') }}">Make your first call</a></p>
                         </div>
                     @endif
@@ -194,7 +245,7 @@
             <!-- Recent Transactions -->
             <div class="card mt-3">
                 <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5><i class="fas fa-exchange-alt"></i> Recent Transactions</h5>
+                    <h5><i class="bx bx-transfer"></i> Recent Transactions</h5>
                     <a href="{{ route('customer.balance-history') }}" class="btn btn-sm btn-outline-primary">View All</a>
                 </div>
                 <div class="card-body">
@@ -227,7 +278,7 @@
                         </div>
                     @else
                         <div class="text-center text-muted py-4">
-                            <i class="fas fa-receipt fa-3x mb-3"></i>
+                            <i class="bx bx-receipt bx-lg mb-3"></i>
                             <p>No transactions yet. <a href="{{ route('customer.payments.add-funds') }}">Add funds to get started</a></p>
                         </div>
                     @endif
@@ -263,5 +314,31 @@ setInterval(function() {
         })
         .catch(error => console.log('Error fetching active calls:', error));
 }, 30000);
+
+// Copy to clipboard function
+function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(function() {
+        // Show success message
+        const toast = document.createElement('div');
+        toast.className = 'toast align-items-center text-white bg-success border-0 position-fixed top-0 end-0 m-3';
+        toast.style.zIndex = '9999';
+        toast.innerHTML = `
+            <div class="d-flex">
+                <div class="toast-body">
+                    Copied to clipboard!
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+            </div>
+        `;
+        document.body.appendChild(toast);
+        const bsToast = new bootstrap.Toast(toast);
+        bsToast.show();
+        
+        // Remove toast after it's hidden
+        toast.addEventListener('hidden.bs.toast', function() {
+            document.body.removeChild(toast);
+        });
+    });
+}
 </script>
 @endpush

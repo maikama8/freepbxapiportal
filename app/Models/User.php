@@ -33,6 +33,14 @@ class User extends Authenticatable
         'currency',
         'sip_username',
         'sip_password',
+        'sip_context',
+        'extension_status',
+        'freepbx_extension_id',
+        'codec_preferences',
+        'call_forward_number',
+        'call_forward_enabled',
+        'voicemail_enabled',
+        'voicemail_email',
         'extension',
         'failed_login_attempts',
         'locked_until',
@@ -68,6 +76,9 @@ class User extends Authenticatable
             'last_login_at' => 'datetime',
             'sip_password' => EncryptedCast::class,
             'phone' => EncryptedCast::class,
+            'codec_preferences' => 'json',
+            'call_forward_enabled' => 'boolean',
+            'voicemail_enabled' => 'boolean',
         ];
     }
 
@@ -163,6 +174,30 @@ class User extends Authenticatable
         }
 
         return in_array($this->role, $roles);
+    }
+
+    /**
+     * Get user's SIP accounts
+     */
+    public function sipAccounts()
+    {
+        return $this->hasMany(SipAccount::class);
+    }
+
+    /**
+     * Get user's primary SIP account
+     */
+    public function primarySipAccount()
+    {
+        return $this->hasOne(SipAccount::class)->where('is_primary', true);
+    }
+
+    /**
+     * Get user's active SIP accounts
+     */
+    public function activeSipAccounts()
+    {
+        return $this->hasMany(SipAccount::class)->where('status', 'active');
     }
 
     /**
@@ -321,5 +356,100 @@ class User extends Authenticatable
     public function paymentTransactions()
     {
         return $this->hasMany(\App\Models\PaymentTransaction::class);
+    }
+
+    /**
+     * Generate SIP credentials
+     */
+    public function generateSipCredentials(): array
+    {
+        if (!$this->sip_username) {
+            $this->sip_username = $this->generateSipUsername();
+        }
+        
+        if (!$this->sip_password) {
+            $this->sip_password = $this->generateSipPassword();
+        }
+        
+        $this->save();
+        
+        return [
+            'username' => $this->sip_username,
+            'password' => $this->sip_password,
+            'context' => $this->sip_context ?: 'from-internal'
+        ];
+    }
+
+    /**
+     * Generate unique SIP username (extension number)
+     */
+    protected function generateSipUsername(): string
+    {
+        $startRange = \App\Models\SystemSetting::get('extension_range_start', 1000);
+        $endRange = \App\Models\SystemSetting::get('extension_range_end', 9999);
+        
+        do {
+            $extension = rand($startRange, $endRange);
+        } while (static::where('sip_username', $extension)->exists());
+        
+        return (string) $extension;
+    }
+
+    /**
+     * Generate secure SIP password
+     */
+    protected function generateSipPassword(): string
+    {
+        return \Str::random(12);
+    }
+
+    /**
+     * Get SIP server configuration
+     */
+    public function getSipServerConfig(): array
+    {
+        return [
+            'host' => \App\Models\SystemSetting::get('sip_server_host', '192.168.1.100'),
+            'port' => \App\Models\SystemSetting::get('sip_server_port', 5060),
+            'transport' => \App\Models\SystemSetting::get('sip_server_transport', 'UDP'),
+            'username' => $this->sip_username,
+            'password' => $this->sip_password,
+            'context' => $this->sip_context ?: 'from-internal'
+        ];
+    }
+
+    /**
+     * Check if extension is active
+     */
+    public function isExtensionActive(): bool
+    {
+        return $this->extension_status === 'active';
+    }
+
+    /**
+     * Activate extension
+     */
+    public function activateExtension(): void
+    {
+        $this->extension_status = 'active';
+        $this->save();
+    }
+
+    /**
+     * Deactivate extension
+     */
+    public function deactivateExtension(): void
+    {
+        $this->extension_status = 'inactive';
+        $this->save();
+    }
+
+    /**
+     * Suspend extension
+     */
+    public function suspendExtension(): void
+    {
+        $this->extension_status = 'suspended';
+        $this->save();
     }
 }

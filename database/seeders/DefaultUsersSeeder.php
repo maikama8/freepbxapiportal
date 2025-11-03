@@ -13,38 +13,55 @@ class DefaultUsersSeeder extends Seeder
     public function run(): void
     {
         // Create default admin user
-        \App\Models\User::factory()->admin()->create([
+        $admin = \App\Models\User::factory()->admin()->create([
             'name' => 'System Administrator',
             'email' => 'admin@voipplatform.com',
             'phone' => '+1234567890',
-            'sip_username' => 'admin',
+            'sip_username' => '1001',
+            'sip_password' => 'admin_sip_123',
+            'sip_context' => 'from-internal',
+            'extension_status' => 'active',
             'password' => \Hash::make('admin123'),
         ]);
 
         // Create default operator user
-        \App\Models\User::factory()->operator()->create([
+        $operator = \App\Models\User::factory()->operator()->create([
             'name' => 'System Operator',
             'email' => 'operator@voipplatform.com',
             'phone' => '+1234567891',
-            'sip_username' => 'operator',
+            'sip_username' => '1002',
+            'sip_password' => 'operator_sip_123',
+            'sip_context' => 'from-internal',
+            'extension_status' => 'active',
             'password' => \Hash::make('operator123'),
         ]);
 
         // Create sample customer users
-        \App\Models\User::factory()->customer()->prepaid()->create([
+        $john = \App\Models\User::factory()->customer()->prepaid()->create([
             'name' => 'John Doe',
             'email' => 'john@example.com',
             'phone' => '+1234567892',
-            'sip_username' => 'john_doe',
+            'sip_username' => '1003',
+            'sip_password' => 'john_sip_123',
+            'sip_context' => 'from-internal',
+            'extension_status' => 'active',
+            'voicemail_enabled' => true,
+            'voicemail_email' => 'john@example.com',
             'password' => \Hash::make('customer123'),
             'balance' => 50.00,
         ]);
 
-        \App\Models\User::factory()->customer()->postpaid()->create([
+        $jane = \App\Models\User::factory()->customer()->postpaid()->create([
             'name' => 'Jane Smith',
             'email' => 'jane@example.com',
             'phone' => '+1234567893',
-            'sip_username' => 'jane_smith',
+            'sip_username' => '1004',
+            'sip_password' => 'jane_sip_123',
+            'sip_context' => 'from-internal',
+            'extension_status' => 'active',
+            'voicemail_enabled' => true,
+            'voicemail_email' => 'jane@example.com',
+            'call_forward_enabled' => false,
             'password' => \Hash::make('customer123'),
             'credit_limit' => 200.00,
         ]);

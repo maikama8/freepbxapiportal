@@ -19,9 +19,9 @@ class VoipServiceProvider extends ServiceProvider
         // Register FreePBX API Client
         $this->app->singleton('freepbx.client', function ($app) {
             return new \App\Services\FreePBX\FreePBXApiClient(
-                config('voip.freepbx.api_url'),
-                config('voip.freepbx.username'),
-                config('voip.freepbx.password'),
+                \App\Models\SystemSetting::get('freepbx_api_url', config('voip.freepbx.api_url')),
+                \App\Models\SystemSetting::get('freepbx_api_username', config('voip.freepbx.username')),
+                \App\Models\SystemSetting::get('freepbx_api_password', config('voip.freepbx.password')),
                 config('voip.freepbx.version')
             );
         });

@@ -71,6 +71,10 @@ class RegisterRequest extends BaseFormRequest
                 'max:255',
                 'regex:/^[a-zA-Z0-9\s\-_\.]+$/'
             ],
+            'terms' => [
+                'required',
+                'accepted'
+            ],
         ];
     }
 
@@ -86,6 +90,8 @@ class RegisterRequest extends BaseFormRequest
             'password.regex' => 'The password must contain at least one uppercase letter, one lowercase letter, one number, and one special character.',
             'currency.regex' => 'The currency must be a valid 3-letter ISO code (e.g., USD).',
             'device_name.regex' => 'The device name contains invalid characters.',
+            'terms.required' => 'You must accept the terms of service to register.',
+            'terms.accepted' => 'You must accept the terms of service to register.',
         ]);
     }
 }

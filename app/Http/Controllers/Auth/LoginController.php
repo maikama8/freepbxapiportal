@@ -16,8 +16,13 @@ class LoginController extends Controller
     /**
      * Show the login form
      */
-    public function showLoginForm(): View
+    public function showLoginForm(): View|RedirectResponse
     {
+        // Redirect if user is already authenticated
+        if (Auth::check()) {
+            return redirect($this->redirectPath(Auth::user()));
+        }
+        
         return view('auth.login');
     }
 
@@ -47,7 +52,7 @@ class LoginController extends Controller
             
             return back()->withErrors([
                 'email' => 'Account is locked. Please try again later.',
-            ])->withInput($request->only('email'));
+            ])->withInput($request->only('email', 'remember'));
         }
 
         // Check if account is active
@@ -89,7 +94,7 @@ class LoginController extends Controller
 
         return back()->withErrors([
             'email' => 'These credentials do not match our records.',
-        ])->withInput($request->only('email'));
+        ])->withInput($request->only('email', 'remember'));
     }
 
     /**
@@ -108,7 +113,7 @@ class LoginController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect('/login')->with('status', 'You have been logged out successfully.');
+        return redirect()->route('login')->with('status', 'You have been logged out successfully.');
     }
 
     /**

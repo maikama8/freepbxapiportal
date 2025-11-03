@@ -23,6 +23,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'security' => \App\Http\Middleware\SecurityMiddleware::class,
             'security.monitoring' => \App\Http\Middleware\SecurityMonitoringMiddleware::class,
             'session.security' => \App\Http\Middleware\SessionSecurityMiddleware::class,
+            'session.timeout' => \App\Http\Middleware\SessionTimeoutMiddleware::class,
             'ip.blocking' => \App\Http\Middleware\IpBlockingMiddleware::class,
         ]);
 
@@ -31,6 +32,7 @@ return Application::configure(basePath: dirname(__DIR__))
             \App\Http\Middleware\IpBlockingMiddleware::class,
             \App\Http\Middleware\SecurityMiddleware::class,
             \App\Http\Middleware\SessionSecurityMiddleware::class,
+            \App\Http\Middleware\SessionTimeoutMiddleware::class,
             \App\Http\Middleware\SecurityMonitoringMiddleware::class,
             \App\Http\Middleware\AccountStatusMiddleware::class,
         ]);

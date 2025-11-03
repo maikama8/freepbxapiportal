@@ -1,4 +1,4 @@
-@extends('layouts.admin')
+@extends('layouts.sneat-admin')
 
 @section('title', 'System Monitoring')
 
@@ -10,10 +10,10 @@
                 <h1 class="h3 mb-0">System Monitoring</h1>
                 <div>
                     <button class="btn btn-outline-primary" onclick="refreshData()">
-                        <i class="fas fa-sync-alt"></i> Refresh
+                        <i class="bx bx-refresh"></i> Refresh
                     </button>
                     <button class="btn btn-outline-secondary" onclick="toggleAutoRefresh()">
-                        <i class="fas fa-clock"></i> <span id="autoRefreshText">Enable Auto-refresh</span>
+                        <i class="bx bx-time"></i> <span id="autoRefreshText">Enable Auto-refresh</span>
                     </button>
                 </div>
             </div>
@@ -27,7 +27,7 @@
                 <div class="card-body">
                     <div class="d-flex align-items-center">
                         <div class="flex-shrink-0">
-                            <i class="fas fa-database fa-2x" id="db-icon"></i>
+                            <i class="bx bx-data bx-lg" id="db-icon"></i>
                         </div>
                         <div class="flex-grow-1 ms-3">
                             <h6 class="card-title mb-1">Database</h6>
@@ -48,7 +48,7 @@
                 <div class="card-body">
                     <div class="d-flex align-items-center">
                         <div class="flex-shrink-0">
-                            <i class="fas fa-memory fa-2x" id="cache-icon"></i>
+                            <i class="bx bx-memory-card bx-lg" id="cache-icon"></i>
                         </div>
                         <div class="flex-grow-1 ms-3">
                             <h6 class="card-title mb-1">Cache</h6>
@@ -65,7 +65,7 @@
                 <div class="card-body">
                     <div class="d-flex align-items-center">
                         <div class="flex-shrink-0">
-                            <i class="fas fa-hdd fa-2x" id="disk-icon"></i>
+                            <i class="bx bx-hdd bx-lg" id="disk-icon"></i>
                         </div>
                         <div class="flex-grow-1 ms-3">
                             <h6 class="card-title mb-1">Disk Space</h6>
@@ -86,7 +86,7 @@
                 <div class="card-body">
                     <div class="d-flex align-items-center">
                         <div class="flex-shrink-0">
-                            <i class="fas fa-users fa-2x text-info"></i>
+                            <i class="bx bx-group bx-lg text-info"></i>
                         </div>
                         <div class="flex-grow-1 ms-3">
                             <h6 class="card-title mb-1">Active Users</h6>
@@ -258,7 +258,7 @@
                 <div class="card-body">
                     <div id="logs-container" style="height: 400px; overflow-y: auto; font-family: monospace; font-size: 12px;">
                         <div class="text-center text-muted">
-                            <i class="fas fa-spinner fa-spin"></i> Loading logs...
+                            <i class="bx bx-loader-alt bx-spin"></i> Loading logs...
                         </div>
                     </div>
                 </div>
@@ -347,7 +347,7 @@ function loadLogs() {
     const channel = document.getElementById('log-channel').value;
     const container = document.getElementById('logs-container');
     
-    container.innerHTML = '<div class="text-center text-muted"><i class="fas fa-spinner fa-spin"></i> Loading logs...</div>';
+    container.innerHTML = '<div class="text-center text-muted"><i class="bx bx-loader-alt bx-spin"></i> Loading logs...</div>';
     
     fetch(`/admin/monitoring/logs?channel=${channel}&lines=50`)
         .then(response => response.json())

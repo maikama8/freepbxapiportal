@@ -1,4 +1,4 @@
-@extends('layouts.admin')
+@extends('layouts.sneat-admin')
 
 @section('title', 'System Monitoring & Reports')
 
@@ -10,10 +10,10 @@
                 <h2>System Monitoring & Reports</h2>
                 <div class="btn-group">
                     <button type="button" class="btn btn-outline-primary" onclick="refreshMetrics()">
-                        <i class="fas fa-sync-alt"></i> Refresh Data
+                        <i class="bx bx-refresh"></i> Refresh Data
                     </button>
                     <button type="button" class="btn btn-outline-info" onclick="checkSystemHealth()">
-                        <i class="fas fa-heartbeat"></i> Health Check
+                        <i class="bx bx-heart"></i> Health Check
                     </button>
                 </div>
             </div>
@@ -24,7 +24,7 @@
                     <div class="card">
                         <div class="card-header">
                             <h5 class="mb-0">
-                                <i class="fas fa-heartbeat"></i> System Health Status
+                                <i class="bx bx-heart"></i> System Health Status
                                 <span id="healthStatusBadge" class="badge bg-secondary ms-2">Checking...</span>
                             </h5>
                         </div>
@@ -82,7 +82,7 @@
                     <div class="card">
                         <div class="card-header">
                             <h5 class="mb-0">
-                                <i class="fas fa-credit-card"></i> Payment Gateway Configuration
+                                <i class="bx bx-credit-card"></i> Payment Gateway Configuration
                             </h5>
                         </div>
                         <div class="card-body">
@@ -100,7 +100,7 @@
                     <div class="card">
                         <div class="card-header">
                             <h5 class="mb-0">
-                                <i class="fas fa-history"></i> Recent Audit Logs
+                                <i class="bx bx-history"></i> Recent Audit Logs
                             </h5>
                         </div>
                         <div class="card-body">
@@ -127,7 +127,7 @@
                     <div class="card">
                         <div class="card-header">
                             <h5 class="mb-0">
-                                <i class="fas fa-info-circle"></i> System Information
+                                <i class="bx bx-info-circle"></i> System Information
                             </h5>
                         </div>
                         <div class="card-body" id="systemInfo">
@@ -254,7 +254,7 @@ function updateMetricsCards(metrics) {
                             <p class="mb-0">Total Users</p>
                         </div>
                         <div class="align-self-center">
-                            <i class="fas fa-users fa-2x"></i>
+                            <i class="bx bx-group bx-lg"></i>
                         </div>
                     </div>
                     <small>Active: ${metrics.users.active_users} | New today: ${metrics.users.new_users_today}</small>
@@ -270,7 +270,7 @@ function updateMetricsCards(metrics) {
                             <p class="mb-0">Total Calls</p>
                         </div>
                         <div class="align-self-center">
-                            <i class="fas fa-phone fa-2x"></i>
+                            <i class="bx bx-phone bx-lg"></i>
                         </div>
                     </div>
                     <small>Active: ${metrics.calls.active_calls} | Today: ${metrics.calls.calls_today}</small>
@@ -286,7 +286,7 @@ function updateMetricsCards(metrics) {
                             <p class="mb-0">Total Revenue</p>
                         </div>
                         <div class="align-self-center">
-                            <i class="fas fa-dollar-sign fa-2x"></i>
+                            <i class="bx bx-dollar bx-lg"></i>
                         </div>
                     </div>
                     <small>Today: $${parseFloat(metrics.financial.revenue_today).toFixed(2)} | This week: $${parseFloat(metrics.financial.revenue_this_week).toFixed(2)}</small>
@@ -302,7 +302,7 @@ function updateMetricsCards(metrics) {
                             <p class="mb-0">Customer Balance</p>
                         </div>
                         <div class="align-self-center">
-                            <i class="fas fa-wallet fa-2x"></i>
+                            <i class="bx bx-wallet bx-lg"></i>
                         </div>
                     </div>
                     <small>Avg call cost: $${parseFloat(metrics.financial.average_call_cost).toFixed(4)}</small>

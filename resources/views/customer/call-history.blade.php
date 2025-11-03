@@ -1,4 +1,4 @@
-@extends('layouts.customer')
+@extends('layouts.sneat-customer')
 
 @section('title', 'Call History')
 
@@ -8,7 +8,7 @@
         <div class="col-12">
             <div class="card">
                 <div class="card-header">
-                    <h5><i class="fas fa-history"></i> Call History</h5>
+                    <h5><i class="bx bx-history"></i> Call History</h5>
                 </div>
                 <div class="card-body">
                     <!-- Filters -->
@@ -43,7 +43,7 @@
                             <label class="form-label">&nbsp;</label>
                             <div class="d-grid">
                                 <button type="submit" class="btn btn-primary">
-                                    <i class="fas fa-search"></i> Filter
+                                    <i class="bx bx-search"></i> Filter
                                 </button>
                             </div>
                         </div>
@@ -52,7 +52,7 @@
                     @if(request()->hasAny(['date_from', 'date_to', 'status', 'destination']))
                         <div class="mb-3">
                             <a href="{{ route('customer.call-history') }}" class="btn btn-sm btn-outline-secondary">
-                                <i class="fas fa-times"></i> Clear Filters
+                                <i class="bx bx-x"></i> Clear Filters
                             </a>
                         </div>
                     @endif
@@ -109,12 +109,12 @@
                                                 <button type="button" class="btn btn-outline-info" 
                                                         data-bs-toggle="modal" 
                                                         data-bs-target="#callDetailsModal{{ $call->id }}">
-                                                    <i class="fas fa-eye"></i>
+                                                    <i class="bx bx-show"></i>
                                                 </button>
                                                 @if($call->isActive())
                                                     <button type="button" class="btn btn-outline-danger" 
                                                             onclick="hangupCall('{{ $call->call_id }}')">
-                                                        <i class="fas fa-phone-slash"></i>
+                                                        <i class="bx bx-phone-off"></i>
                                                     </button>
                                                 @endif
                                             </div>
@@ -199,7 +199,7 @@
                         </div>
                     @else
                         <div class="text-center text-muted py-5">
-                            <i class="fas fa-phone-slash fa-4x mb-3"></i>
+                            <i class="bx bx-phone-off bx-lg mb-3"></i>
                             <h5>No calls found</h5>
                             <p>
                                 @if(request()->hasAny(['date_from', 'date_to', 'status', 'destination']))

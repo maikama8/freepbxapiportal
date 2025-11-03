@@ -1,4 +1,4 @@
-@extends('layouts.admin')
+@extends('layouts.sneat-admin')
 
 @section('title', 'Rate Management')
 
@@ -10,13 +10,13 @@
                 <h2>Rate Management</h2>
                 <div class="btn-group">
                     <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#bulkImportModal">
-                        <i class="fas fa-upload"></i> Bulk Import
+                        <i class="bx bx-upload"></i> Bulk Import
                     </button>
                     <button type="button" class="btn btn-info" onclick="exportRates()">
-                        <i class="fas fa-download"></i> Export CSV
+                        <i class="bx bx-download"></i> Export CSV
                     </button>
                     <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createRateModal">
-                        <i class="fas fa-plus"></i> Add New Rate
+                        <i class="bx bx-plus"></i> Add New Rate
                     </button>
                 </div>
             </div>
@@ -64,7 +64,7 @@
                                         </div>
                                         <div class="col-md-3">
                                             <button type="button" id="testRateBtn" class="btn btn-outline-primary">
-                                                <i class="fas fa-calculator"></i> Calculate Cost
+                                                <i class="bx bx-calculator"></i> Calculate Cost
                                             </button>
                                         </div>
                                         <div class="col-md-2">
@@ -382,13 +382,13 @@ $(document).ready(function() {
                     return `
                         <div class="btn-group" role="group">
                             <button type="button" class="btn btn-sm btn-outline-primary" onclick="editRate(${data})" title="Edit">
-                                <i class="fas fa-edit"></i>
+                                <i class="bx bx-edit"></i>
                             </button>
                             <button type="button" class="btn btn-sm btn-outline-info" onclick="viewHistory('${row.destination_prefix}')" title="History">
-                                <i class="fas fa-history"></i>
+                                <i class="bx bx-history"></i>
                             </button>
                             <button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteRate(${data})" title="Delete">
-                                <i class="fas fa-trash"></i>
+                                <i class="bx bx-trash"></i>
                             </button>
                         </div>
                     `;

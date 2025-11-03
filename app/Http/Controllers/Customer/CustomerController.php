@@ -16,7 +16,7 @@ class CustomerController extends Controller
      */
     public function dashboard(): View
     {
-        $user = Auth::user();
+        $user = Auth::user()->load(['sipAccounts', 'primarySipAccount']);
         
         // Get recent call records (last 10)
         $recentCalls = $user->callRecords()
@@ -97,7 +97,7 @@ class CustomerController extends Controller
      */
     public function accountSettings(): View
     {
-        $user = Auth::user();
+        $user = Auth::user()->load('sipAccounts');
         return view('customer.account-settings', compact('user'));
     }
 

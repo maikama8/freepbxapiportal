@@ -1,4 +1,4 @@
-@extends('layouts.customer')
+@extends('layouts.sneat-customer')
 
 @section('title', 'Payment History')
 
