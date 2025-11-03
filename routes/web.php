@@ -275,6 +275,19 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::get('/payments', function () { return view('admin.payments.index'); })->name('payments.index');
     Route::get('/reports', function () { return view('admin.reports.index'); })->name('reports.index');
     
+    // Role Management Routes
+    Route::prefix('roles')->name('roles.')->group(function () {
+        Route::get('/', [App\Http\Controllers\Admin\RoleManagementController::class, 'index'])->name('index');
+        Route::get('/data', [App\Http\Controllers\Admin\RoleManagementController::class, 'getData'])->name('data');
+        Route::post('/', [App\Http\Controllers\Admin\RoleManagementController::class, 'store'])->name('store');
+        Route::get('/{role}', [App\Http\Controllers\Admin\RoleManagementController::class, 'show'])->name('show');
+        Route::put('/{role}', [App\Http\Controllers\Admin\RoleManagementController::class, 'update'])->name('update');
+        Route::delete('/{role}', [App\Http\Controllers\Admin\RoleManagementController::class, 'destroy'])->name('destroy');
+        Route::get('/permissions/list', [App\Http\Controllers\Admin\RoleManagementController::class, 'getPermissions'])->name('permissions');
+        Route::post('/assign', [App\Http\Controllers\Admin\RoleManagementController::class, 'assignRole'])->name('assign');
+        Route::get('/statistics/data', [App\Http\Controllers\Admin\RoleManagementController::class, 'getStatistics'])->name('statistics');
+    });
+    
     // Audit Log Management
     Route::prefix('audit')->name('audit.')->group(function () {
         Route::get('/', [App\Http\Controllers\Admin\AuditController::class, 'index'])->name('index');
