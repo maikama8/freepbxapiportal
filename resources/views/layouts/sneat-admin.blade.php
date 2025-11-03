@@ -9,7 +9,7 @@
     <meta name="description" content="FreePBX VoIP Platform Admin Panel" />
 
     <!-- Favicon -->
-    <link rel="icon" type="image/x-icon" href="{{ asset('sneat/img/favicon/favicon.ico') }}" />
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,{{ base64_encode('<svg width="32" height="32" xmlns="http://www.w3.org/2000/svg"><rect width="32" height="32" fill="#696cff"/><text x="16" y="22" text-anchor="middle" fill="white" font-family="Arial" font-size="18" font-weight="bold">V</text></svg>') }}" />
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -24,9 +24,13 @@
     <link rel="stylesheet" href="{{ asset('sneat/css/demo.css') }}" />
     
     <!-- Vendors CSS -->
-    <link rel="stylesheet" href="{{ asset('sneat/vendor/libs/perfect-scrollbar/perfect-scrollbar.css') }}" />
+    <link rel="stylesheet" href="{{ asset('sneat/vendor/libs/perfect-scrollbar/perfect-scrollbar.css') }}" 
+          onerror="this.onerror=null;this.href='https://cdnjs.cloudflare.com/ajax/libs/perfect-scrollbar/1.5.5/css/perfect-scrollbar.min.css'" />
     
     @stack('styles')
+    
+    <!-- Custom fixes for missing assets -->
+    <link rel="stylesheet" href="{{ asset('css/fixes.css') }}" />
 
     <!-- Helpers -->
     <script src="{{ asset('sneat/vendor/js/helpers.js') }}"></script>
@@ -190,7 +194,7 @@
                             <li class="nav-item navbar-dropdown dropdown-user dropdown">
                                 <a class="nav-link dropdown-toggle hide-arrow" href="javascript:void(0);" data-bs-toggle="dropdown">
                                     <div class="avatar avatar-online">
-                                        <img src="{{ asset('sneat/img/avatars/1.png') }}" alt class="w-px-40 h-auto rounded-circle" />
+                                        <x-user-avatar :user="auth()->user()" :size="40" class="w-px-40 h-auto" />
                                     </div>
                                 </a>
                                 <ul class="dropdown-menu dropdown-menu-end">
@@ -199,7 +203,7 @@
                                             <div class="d-flex">
                                                 <div class="flex-shrink-0 me-3">
                                                     <div class="avatar avatar-online">
-                                                        <img src="{{ asset('sneat/img/avatars/1.png') }}" alt class="w-px-40 h-auto rounded-circle" />
+                                                        <x-user-avatar :user="auth()->user()" :size="40" class="w-px-40 h-auto" />
                                                     </div>
                                                 </div>
                                                 <div class="flex-grow-1">
@@ -296,10 +300,14 @@
     <!-- / Layout wrapper -->
 
     <!-- Core JS -->
-    <script src="{{ asset('sneat/vendor/libs/jquery/jquery.js') }}"></script>
-    <script src="{{ asset('sneat/vendor/libs/popper/popper.js') }}"></script>
-    <script src="{{ asset('sneat/vendor/js/bootstrap.js') }}"></script>
-    <script src="{{ asset('sneat/vendor/libs/perfect-scrollbar/perfect-scrollbar.js') }}"></script>
+    <script src="{{ asset('sneat/vendor/libs/jquery/jquery.js') }}" 
+            onerror="this.onerror=null;this.src='https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js'"></script>
+    <script src="{{ asset('sneat/vendor/libs/popper/popper.js') }}" 
+            onerror="this.onerror=null;this.src='https://cdnjs.cloudflare.com/ajax/libs/popper.js/2.11.8/umd/popper.min.js'"></script>
+    <script src="{{ asset('sneat/vendor/js/bootstrap.js') }}" 
+            onerror="this.onerror=null;this.src='https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js'"></script>
+    <script src="{{ asset('sneat/vendor/libs/perfect-scrollbar/perfect-scrollbar.js') }}" 
+            onerror="this.onerror=null;this.src='https://cdnjs.cloudflare.com/ajax/libs/perfect-scrollbar/1.5.5/perfect-scrollbar.min.js'"></script>
     <script src="{{ asset('sneat/vendor/js/menu.js') }}"></script>
 
     <!-- Main JS -->
@@ -309,6 +317,9 @@
 
     <!-- Auto-logout functionality -->
     <script src="{{ asset('js/auto-logout.js') }}"></script>
+    
+    <!-- Asset fallbacks -->
+    <script src="{{ asset('js/asset-fallbacks.js') }}"></script>
 
     <script>
         // Auto-dismiss alerts after 5 seconds

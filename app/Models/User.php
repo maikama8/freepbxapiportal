@@ -359,6 +359,14 @@ class User extends Authenticatable
     }
 
     /**
+     * Get DID numbers relationship
+     */
+    public function didNumbers()
+    {
+        return $this->hasMany(\App\Models\DidNumber::class);
+    }
+
+    /**
      * Generate SIP credentials
      */
     public function generateSipCredentials(): array

@@ -19,11 +19,18 @@ class VoipServiceProvider extends ServiceProvider
         // Register FreePBX API Client
         $this->app->singleton('freepbx.client', function ($app) {
             return new \App\Services\FreePBX\FreePBXApiClient(
-                \App\Models\SystemSetting::get('freepbx_api_url', config('voip.freepbx.api_url')),
-                \App\Models\SystemSetting::get('freepbx_api_username', config('voip.freepbx.username')),
-                \App\Models\SystemSetting::get('freepbx_api_password', config('voip.freepbx.password')),
-                config('voip.freepbx.version')
+                config('voip.freepbx.api_url'),
+                config('voip.freepbx.username'),
+                config('voip.freepbx.password'),
+                config('voip.freepbx.version'),
+                config('voip.freepbx.client_id'),
+                config('voip.freepbx.client_secret')
             );
+        });
+
+        // Also register the class directly for dependency injection
+        $this->app->singleton(\App\Services\FreePBX\FreePBXApiClient::class, function ($app) {
+            return $app->make('freepbx.client');
         });
 
         // Register Call Management Service

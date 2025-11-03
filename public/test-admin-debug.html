@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Debug Test</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-5">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h4>Admin Access Debug</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-info">
+                            <strong>Server is running on port 8001</strong><br>
+                            Use: <code>http://127.0.0.1:8001</code> instead of <code>http://127.0.0.1:8000</code>
+                        </div>
+                        
+                        <h5>Step-by-Step Instructions:</h5>
+                        <ol>
+                            <li><strong>Login first:</strong> <a href="http://127.0.0.1:8001/login" target="_blank" class="btn btn-sm btn-primary">Go to Login</a></li>
+                            <li><strong>Use these credentials:</strong>
+                                <ul>
+                                    <li>Email: <code>admin@voipplatform.com</code></li>
+                                    <li>Password: <code>admin123</code></li>
+                                </ul>
+                            </li>
+                            <li><strong>After login, access admin:</strong> <a href="http://127.0.0.1:8001/admin/customers" target="_blank" class="btn btn-sm btn-success">Admin Customers</a></li>
+                        </ol>
+                        
+                        <div class="mt-4">
+                            <h6>Quick Test Links (use port 8001):</h6>
+                            <div class="d-grid gap-2">
+                                <a href="http://127.0.0.1:8001/login" class="btn btn-outline-primary" target="_blank">Login Page</a>
+                                <a href="http://127.0.0.1:8001/admin/dashboard" class="btn btn-outline-info" target="_blank">Admin Dashboard</a>
+                                <a href="http://127.0.0.1:8001/admin/customers" class="btn btn-outline-success" target="_blank">Admin Customers</a>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-4 alert alert-warning">
+                            <strong>Important:</strong> Make sure you're using port <strong>8001</strong> not 8000!
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -358,4 +358,226 @@ class CDRService
             ->limit($limit)
             ->get();
     }
+
+    /**
+     * Get recent calls (alias for getRecentActivity)
+     */
+    public function getRecentCalls(int $limit = 10): Collection
+    {
+        return $this->getRecentActivity($limit);
+    }
+
+    /**
+     * Get calls for a specific user/extension from FreePBX CDR directly
+     */
+    public function getCallsForUser(string $extension, int $limit = 100, ?string $startDate = null, ?string $endDate = null): array
+    {
+        try {
+            $query = "
+                SELECT 
+                    calldate,
+                    clid,
+                    src,
+                    dst,
+                    dcontext,
+                    channel,
+                    dstchannel,
+                    lastapp,
+                    lastdata,
+                    duration,
+                    billsec,
+                    disposition,
+                    amaflags,
+                    accountcode,
+                    uniqueid,
+                    userfield
+                FROM cdr 
+                WHERE (src = ? OR dst = ?)
+            ";
+
+            $params = [$extension, $extension];
+
+            if ($startDate) {
+                $query .= " AND calldate >= ?";
+                $params[] = $startDate;
+            }
+
+            if ($endDate) {
+                $query .= " AND calldate <= ?";
+                $params[] = $endDate;
+            }
+
+            $query .= " ORDER BY calldate DESC LIMIT ?";
+            $params[] = $limit;
+
+            return \DB::connection('freepbx')->select($query, $params);
+        } catch (\Exception $e) {
+            Log::error('Failed to fetch calls for user', [
+                'extension' => $extension,
+                'error' => $e->getMessage()
+            ]);
+            
+            return [];
+        }
+    }
+
+    /**
+     * Sync CDR records from FreePBX database to Laravel for billing
+     */
+    public function syncCDRFromDatabase(): int
+    {
+        try {
+            // Get the last synced call date
+            $lastSyncedCall = CallRecord::orderBy('call_date', 'desc')->first();
+            $lastSyncDate = $lastSyncedCall ? $lastSyncedCall->call_date : '1970-01-01 00:00:00';
+
+            $query = "
+                SELECT 
+                    calldate,
+                    clid,
+                    src,
+                    dst,
+                    dcontext,
+                    channel,
+                    dstchannel,
+                    lastapp,
+                    lastdata,
+                    duration,
+                    billsec,
+                    disposition,
+                    amaflags,
+                    accountcode,
+                    uniqueid,
+                    userfield
+                FROM cdr 
+                WHERE calldate > ?
+                AND disposition = 'ANSWERED'
+                AND billsec > 0
+                ORDER BY calldate ASC
+            ";
+
+            $newCalls = \DB::connection('freepbx')->select($query, [$lastSyncDate]);
+            $syncedCount = 0;
+
+            foreach ($newCalls as $call) {
+                // Find the user by extension
+                $user = User::whereHas('sipAccounts', function($query) use ($call) {
+                    $query->where('sip_username', $call->src);
+                })->first();
+
+                if (!$user) {
+                    continue; // Skip calls from unknown extensions
+                }
+
+                // Determine call direction and destination country
+                $isOutbound = $this->isOutboundCall($call->dst);
+                $destinationCountry = $this->getDestinationCountry($call->dst);
+                
+                // Get call rate
+                $callRate = \App\Models\CallRate::where('country_code', $destinationCountry)
+                    ->where('is_active', true)
+                    ->first();
+
+                if (!$callRate && $isOutbound) {
+                    Log::warning('No call rate found for destination', [
+                        'destination' => $call->dst,
+                        'country' => $destinationCountry
+                    ]);
+                    continue;
+                }
+
+                // Calculate cost
+                $durationMinutes = ceil($call->billsec / 60);
+                $cost = $isOutbound && $callRate ? ($callRate->rate_per_minute * $durationMinutes) : 0;
+
+                // Create call record
+                CallRecord::create([
+                    'user_id' => $user->id,
+                    'call_date' => $call->calldate,
+                    'caller_id' => $call->clid,
+                    'source' => $call->src,
+                    'destination' => $call->dst,
+                    'duration' => $call->duration,
+                    'billable_seconds' => $call->billsec,
+                    'disposition' => $call->disposition,
+                    'call_type' => $isOutbound ? 'outbound' : 'inbound',
+                    'destination_country' => $destinationCountry,
+                    'rate_per_minute' => $callRate ? $callRate->rate_per_minute : 0,
+                    'total_cost' => $cost,
+                    'unique_id' => $call->uniqueid,
+                    'raw_cdr_data' => json_encode($call)
+                ]);
+
+                // Deduct cost from user balance if outbound call
+                if ($isOutbound && $cost > 0) {
+                    $balanceService = app(\App\Services\BalanceService::class);
+                    $balanceService->deductBalance($user->id, $cost, 'call_charge', [
+                        'destination' => $call->dst,
+                        'duration' => $durationMinutes,
+                        'rate' => $callRate->rate_per_minute
+                    ]);
+                }
+
+                $syncedCount++;
+            }
+
+            Log::info('CDR sync completed', ['synced_records' => $syncedCount]);
+            return $syncedCount;
+
+        } catch (\Exception $e) {
+            Log::error('Failed to sync CDR records', [
+                'error' => $e->getMessage()
+            ]);
+            
+            return 0;
+        }
+    }
+
+    /**
+     * Determine if a call is outbound based on destination
+     */
+    private function isOutboundCall(string $destination): bool
+    {
+        // Check if destination is an external number (not an extension)
+        // Extensions are typically 3-4 digits, external numbers are longer
+        return strlen($destination) > 4 && !in_array($destination, ['s', 'h']);
+    }
+
+    /**
+     * Get destination country from phone number
+     */
+    private function getDestinationCountry(string $destination): string
+    {
+        // Remove any non-numeric characters
+        $cleanNumber = preg_replace('/[^0-9]/', '', $destination);
+        
+        // Basic country code detection (you can enhance this)
+        $countryCodes = [
+            '1' => 'US', // US/Canada
+            '44' => 'GB', // UK
+            '49' => 'DE', // Germany
+            '33' => 'FR', // France
+            '39' => 'IT', // Italy
+            '34' => 'ES', // Spain
+            '31' => 'NL', // Netherlands
+            '46' => 'SE', // Sweden
+            '47' => 'NO', // Norway
+            '45' => 'DK', // Denmark
+            '91' => 'IN', // India
+            '86' => 'CN', // China
+            '81' => 'JP', // Japan
+            '82' => 'KR', // South Korea
+            '61' => 'AU', // Australia
+            '55' => 'BR', // Brazil
+            '52' => 'MX', // Mexico
+        ];
+
+        foreach ($countryCodes as $code => $country) {
+            if (str_starts_with($cleanNumber, $code)) {
+                return $country;
+            }
+        }
+
+        return 'UNKNOWN';
+    }
 }

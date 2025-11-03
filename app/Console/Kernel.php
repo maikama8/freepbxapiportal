@@ -4,6 +4,7 @@ namespace App\Console;
 
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
+use App\Services\CronJobManager;
 
 class Kernel extends ConsoleKernel
 {
@@ -12,6 +13,16 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule): void
     {
+        // Add cron job monitoring and cleanup
+        $schedule->command('cron:monitor cleanup --days=30')
+                 ->weekly()
+                 ->withoutOverlapping()
+                 ->runInBackground();
+
+        $schedule->command('cron:monitor kill-stuck --max-runtime=120')
+                 ->hourly()
+                 ->withoutOverlapping()
+                 ->runInBackground();
         // System health checks every 5 minutes
         $schedule->command('system:health-check --alert')
                  ->everyFiveMinutes()
@@ -36,9 +47,27 @@ class Kernel extends ConsoleKernel
                  ->withoutOverlapping()
                  ->runInBackground();
 
-        // Send low balance warnings daily at 9 AM
-        $schedule->command('balance:send-warnings')
+        // FreePBX extension synchronization every 30 minutes
+        $schedule->command('freepbx:automated-sync --sync-mode=incremental --batch-size=20')
+                 ->everyThirtyMinutes()
+                 ->withoutOverlapping()
+                 ->runInBackground();
+
+        // Monthly DID billing on the 1st of each month at 2 AM
+        $schedule->command('billing:monthly-did-charges --suspend-insufficient')
+                 ->monthlyOn(1, '02:00')
+                 ->withoutOverlapping()
+                 ->runInBackground();
+
+        // Automated system maintenance (includes low balance warnings) daily at 9 AM
+        $schedule->command('system:automated-maintenance --task=all')
                  ->dailyAt('09:00')
+                 ->withoutOverlapping()
+                 ->runInBackground();
+
+        // System health check every hour
+        $schedule->command('system:automated-maintenance --task=health-check')
+                 ->hourly()
                  ->withoutOverlapping()
                  ->runInBackground();
 
@@ -90,6 +119,18 @@ class Kernel extends ConsoleKernel
         // Sync CDR records from FreePBX every 10 minutes
         $schedule->command('cdr:sync')
                  ->everyTenMinutes()
+                 ->withoutOverlapping()
+                 ->runInBackground();
+
+        // Process enhanced CDR records every 5 minutes (NEW AUTOMATED VERSION)
+        $schedule->command('cdr:automated-processing --batch-size=50')
+                 ->everyFiveMinutes()
+                 ->withoutOverlapping()
+                 ->runInBackground();
+
+        // Monitor real-time billing every 2 minutes
+        $schedule->command('billing:monitor-realtime --terminate')
+                 ->everyTwoMinutes()
                  ->withoutOverlapping()
                  ->runInBackground();
 

@@ -13,6 +13,8 @@ class CallRate extends Model
         'rate_per_minute',
         'minimum_duration',
         'billing_increment',
+        'billing_increment_config',
+        'billing_rules',
         'effective_date',
         'is_active'
     ];
@@ -21,6 +23,8 @@ class CallRate extends Model
         'rate_per_minute' => 'decimal:6',
         'minimum_duration' => 'integer',
         'billing_increment' => 'integer',
+        'billing_increment_config' => 'string',
+        'billing_rules' => 'json',
         'effective_date' => 'datetime',
         'is_active' => 'boolean'
     ];

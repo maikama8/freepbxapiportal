@@ -198,6 +198,14 @@ return [
             'replace_placeholders' => true,
         ],
 
+        'cron' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/cron.log'),
+            'level' => env('LOG_LEVEL', 'info'),
+            'days' => env('LOG_CRON_DAYS', 30),
+            'replace_placeholders' => true,
+        ],
+
     ],
 
 ];

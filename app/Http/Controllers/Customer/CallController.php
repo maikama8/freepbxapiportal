@@ -294,4 +294,158 @@ class CallController extends Controller
         
         return view('customer.calls.monitor', compact('activeCalls'));
     }
+
+    /**
+     * Get enhanced call rate with billing predictions
+     */
+    public function getEnhancedCallRate(Request $request): JsonResponse
+    {
+        $request->validate([
+            'destination' => 'required|string'
+        ]);
+
+        try {
+            $rate = $this->billingService->getCallRate($request->destination);
+            
+            if (!$rate) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No rate found for this destination'
+                ]);
+            }
+
+            // Calculate cost predictions for different durations
+            $predictions = [];
+            $durations = [1, 5, 10, 30, 60]; // minutes
+            
+            foreach ($durations as $minutes) {
+                $seconds = $minutes * 60;
+                $billedSeconds = max(
+                    ceil($seconds / $rate->billing_increment) * $rate->billing_increment,
+                    $rate->minimum_duration
+                );
+                $cost = ($rate->rate_per_minute / 60) * $billedSeconds;
+                
+                $predictions[] = [
+                    'duration_minutes' => $minutes,
+                    'duration_seconds' => $seconds,
+                    'billed_seconds' => $billedSeconds,
+                    'cost' => round($cost, 4),
+                    'formatted_cost' => '$' . number_format($cost, 4)
+                ];
+            }
+
+            return response()->json([
+                'success' => true,
+                'rate' => [
+                    'destination_name' => $rate->destination_name,
+                    'rate_per_minute' => $rate->rate_per_minute,
+                    'formatted_rate' => '$' . number_format($rate->rate_per_minute, 4) . '/min',
+                    'minimum_duration' => $rate->minimum_duration,
+                    'billing_increment' => $rate->billing_increment,
+                    'connection_fee' => $rate->connection_fee ?? 0,
+                    'increment_description' => $this->getBillingIncrementDescription($rate->billing_increment),
+                    'cost_predictions' => $predictions
+                ]
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to get enhanced call rate: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get real-time call billing information
+     */
+    public function getCallBilling(CallRecord $callRecord): JsonResponse
+    {
+        $user = Auth::user();
+
+        if ($callRecord->user_id !== $user->id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'You do not own this call record'
+            ], 403);
+        }
+
+        try {
+            $realTimeBillingService = app(\App\Services\RealTimeBillingService::class);
+            $currentCost = $realTimeBillingService->calculateCurrentCallCost($callRecord);
+            
+            // Get billing breakdown
+            $breakdown = $realTimeBillingService->getCallBillingBreakdown($callRecord);
+            
+            // Calculate next increment information
+            $rate = $callRecord->callRate;
+            $elapsed = $callRecord->duration;
+            $increment = $rate->billing_increment ?? 60;
+            
+            $nextIncrementIn = $increment - ($elapsed % $increment);
+            $nextIncrementCost = ($rate->rate_per_minute / 60) * $increment;
+            
+            // Calculate cost predictions
+            $predictions = [];
+            $futureDurations = [300, 600, 1800]; // 5, 10, 30 minutes from now
+            
+            foreach ($futureDurations as $additionalSeconds) {
+                $totalSeconds = $elapsed + $additionalSeconds;
+                $billedSeconds = max(
+                    ceil($totalSeconds / $increment) * $increment,
+                    $rate->minimum_duration
+                );
+                $totalCost = ($rate->rate_per_minute / 60) * $billedSeconds;
+                
+                $predictions[] = [
+                    'additional_minutes' => $additionalSeconds / 60,
+                    'total_duration' => $totalSeconds,
+                    'total_cost' => round($totalCost, 4),
+                    'additional_cost' => round($totalCost - $currentCost, 4)
+                ];
+            }
+
+            return response()->json([
+                'success' => true,
+                'billing' => [
+                    'current_cost' => round($currentCost, 4),
+                    'formatted_current_cost' => '$' . number_format($currentCost, 4),
+                    'elapsed_seconds' => $elapsed,
+                    'formatted_duration' => gmdate('H:i:s', $elapsed),
+                    'rate_per_minute' => $rate->rate_per_minute,
+                    'billing_increment' => $increment,
+                    'next_increment_in' => $nextIncrementIn,
+                    'next_increment_cost' => round($nextIncrementCost, 4),
+                    'breakdown' => $breakdown,
+                    'predictions' => $predictions,
+                    'balance_remaining' => $user->balance,
+                    'can_continue' => $user->balance > $nextIncrementCost
+                ]
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to get call billing: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get billing increment description
+     */
+    private function getBillingIncrementDescription(int $increment): string
+    {
+        switch ($increment) {
+            case 1:
+                return 'Per-second billing (most accurate)';
+            case 6:
+                return '6-second increments (standard)';
+            case 30:
+                return '30-second increments';
+            case 60:
+                return '1-minute increments';
+            default:
+                return $increment . '-second increments';
+        }
+    }
 }

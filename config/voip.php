@@ -16,6 +16,8 @@ return [
         'api_url' => env('FREEPBX_API_URL', 'http://localhost'),
         'username' => env('FREEPBX_API_USERNAME'),
         'password' => env('FREEPBX_API_PASSWORD'),
+        'client_id' => env('FREEPBX_API_CLIENT_ID'),
+        'client_secret' => env('FREEPBX_API_CLIENT_SECRET'),
         'version' => env('FREEPBX_API_VERSION', 'v17'),
         'timeout' => env('FREEPBX_API_TIMEOUT', 30),
         'retry_attempts' => env('FREEPBX_API_RETRY_ATTEMPTS', 3),

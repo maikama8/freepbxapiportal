@@ -74,6 +74,10 @@ class CustomerController extends Controller
         $customers = $query->skip($start)->take($length)->get();
 
         $data = $customers->map(function ($customer) {
+            // Get primary SIP account extension
+            $primarySip = $customer->sipAccounts()->where('is_primary', true)->first();
+            $extension = $primarySip ? $primarySip->sip_username : ($customer->extension ?? 'N/A');
+            
             return [
                 'id' => $customer->id,
                 'name' => $customer->name,
@@ -84,7 +88,7 @@ class CustomerController extends Controller
                 'balance' => number_format($customer->balance, 2),
                 'credit_limit' => $customer->isPostpaid() ? number_format($customer->credit_limit, 2) : 'N/A',
                 'status' => ucfirst($customer->status),
-                'extension' => $customer->extension ?? 'N/A',
+                'extension' => $extension,
                 'created_at' => $customer->created_at->format('M d, Y'),
                 'last_login' => $customer->last_login_at ? $customer->last_login_at->format('M d, Y H:i') : 'Never',
                 'actions' => $customer->id
@@ -549,6 +553,244 @@ class CustomerController extends Controller
                 'success' => false,
                 'message' => 'Failed to reset password',
                 'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Create additional extension for customer
+     */
+    public function createExtension(Request $request, User $customer): JsonResponse
+    {
+        if (!in_array($customer->role, ['customer', 'operator'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'User not found'
+            ], 404);
+        }
+
+        $request->validate([
+            'extension_number' => 'nullable|string|unique:sip_accounts,sip_username',
+            'password' => 'nullable|string|min:6'
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            $extensionService = app(\App\Services\FreePBX\ExtensionService::class);
+            
+            $extension = $request->extension_number ?: \App\Models\SipAccount::getNextAvailableExtension();
+            $password = $request->password ?: 'secure' . rand(1000, 9999);
+
+            // Create extension in FreePBX
+            $result = $extensionService->createExtension($customer, $extension, $password);
+
+            // Create SIP account in Laravel
+            $sipAccount = \App\Models\SipAccount::create([
+                'user_id' => $customer->id,
+                'sip_username' => $extension,
+                'sip_password' => $password,
+                'sip_server' => config('voip.freepbx.sip.domain'),
+                'sip_port' => config('voip.freepbx.sip.port', 5060),
+                'status' => 'active',
+                'is_primary' => $customer->sipAccounts()->count() === 0 // First extension is primary
+            ]);
+
+            // Log the extension creation
+            AuditLog::create([
+                'user_id' => auth()->id(),
+                'action' => 'extension_created',
+                'description' => "Created extension {$extension} for {$customer->name}",
+                'ip_address' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+                'metadata' => [
+                    'customer_id' => $customer->id,
+                    'extension' => $extension,
+                    'sip_account_id' => $sipAccount->id
+                ]
+            ]);
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => "Extension {$extension} created successfully",
+                'data' => [
+                    'extension' => $extension,
+                    'password' => $password,
+                    'sip_server' => config('voip.freepbx.sip.domain'),
+                    'sip_port' => config('voip.freepbx.sip.port', 5060)
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to create extension: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get customer call history
+     */
+    public function callHistory(Request $request, User $customer): JsonResponse
+    {
+        if (!in_array($customer->role, ['customer', 'operator'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'User not found'
+            ], 404);
+        }
+
+        $query = $customer->callRecords();
+
+        // Apply filters
+        if ($request->filled('date_from')) {
+            $query->where('call_date', '>=', $request->date_from);
+        }
+
+        if ($request->filled('date_to')) {
+            $query->where('call_date', '<=', $request->date_to);
+        }
+
+        if ($request->filled('call_type')) {
+            $query->where('call_type', $request->call_type);
+        }
+
+        if ($request->filled('destination')) {
+            $query->where('destination', 'like', '%' . $request->destination . '%');
+        }
+
+        $totalRecords = $query->count();
+        
+        // Pagination
+        $start = $request->start ?? 0;
+        $length = $request->length ?? 50;
+        
+        $calls = $query->orderBy('call_date', 'desc')
+            ->skip($start)
+            ->take($length)
+            ->get();
+
+        $data = $calls->map(function ($call) {
+            return [
+                'call_date' => $call->call_date->format('M d, Y H:i:s'),
+                'caller_id' => $call->caller_id,
+                'source' => $call->source,
+                'destination' => $call->destination,
+                'duration' => gmdate('H:i:s', $call->duration),
+                'call_type' => ucfirst($call->call_type),
+                'destination_country' => $call->destination_country,
+                'total_cost' => '$' . number_format($call->total_cost, 4),
+                'disposition' => $call->disposition
+            ];
+        });
+
+        return response()->json([
+            'draw' => intval($request->draw ?? 1),
+            'recordsTotal' => $totalRecords,
+            'recordsFiltered' => $totalRecords,
+            'data' => $data
+        ]);
+    }
+
+    /**
+     * Get customer extensions
+     */
+    public function getExtensions(User $customer): JsonResponse
+    {
+        if (!in_array($customer->role, ['customer', 'operator'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'User not found'
+            ], 404);
+        }
+
+        $extensions = $customer->sipAccounts()->get()->map(function ($sipAccount) {
+            return [
+                'id' => $sipAccount->id,
+                'extension' => $sipAccount->sip_username,
+                'status' => $sipAccount->status,
+                'is_primary' => $sipAccount->is_primary,
+                'created_at' => $sipAccount->created_at->format('M d, Y'),
+                'sip_server' => $sipAccount->sip_server,
+                'sip_port' => $sipAccount->sip_port
+            ];
+        });
+
+        return response()->json([
+            'success' => true,
+            'extensions' => $extensions
+        ]);
+    }
+
+    /**
+     * Delete customer extension
+     */
+    public function deleteExtension(Request $request, User $customer, \App\Models\SipAccount $sipAccount): JsonResponse
+    {
+        if (!in_array($customer->role, ['customer', 'operator'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'User not found'
+            ], 404);
+        }
+
+        if ($sipAccount->user_id !== $customer->id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Extension not found'
+            ], 404);
+        }
+
+        if ($sipAccount->is_primary && $customer->sipAccounts()->count() > 1) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Cannot delete primary extension when other extensions exist'
+            ], 422);
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $extension = $sipAccount->sip_username;
+
+            // Delete from FreePBX
+            $extensionService = app(\App\Services\FreePBX\ExtensionService::class);
+            $extensionService->deleteExtension($extension);
+
+            // Delete from Laravel
+            $sipAccount->delete();
+
+            // Log the deletion
+            AuditLog::create([
+                'user_id' => auth()->id(),
+                'action' => 'extension_deleted',
+                'description' => "Deleted extension {$extension} for {$customer->name}",
+                'ip_address' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+                'metadata' => [
+                    'customer_id' => $customer->id,
+                    'extension' => $extension
+                ]
+            ]);
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => "Extension {$extension} deleted successfully"
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to delete extension: ' . $e->getMessage()
             ], 500);
         }
     }

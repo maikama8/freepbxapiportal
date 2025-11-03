@@ -18,6 +18,10 @@ class CallRecord extends Model
         'end_time',
         'duration',
         'cost',
+        'billing_status',
+        'billing_details',
+        'actual_duration',
+        'billable_duration',
         'status',
         'freepbx_response'
     ];
@@ -27,6 +31,9 @@ class CallRecord extends Model
         'end_time' => 'datetime',
         'duration' => 'integer',
         'cost' => 'decimal:4',
+        'billing_details' => 'json',
+        'actual_duration' => 'integer',
+        'billable_duration' => 'integer',
         'freepbx_response' => 'json'
     ];
 

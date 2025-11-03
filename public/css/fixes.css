@@ -1,0 +1,179 @@
+/* Placeholder Image System - Comprehensive Fixes */
+
+/* Default placeholder styles */
+.placeholder-image {
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #6c757d;
+}
+
+/* User avatar specific styles */
+.user-avatar {
+    border-radius: 50%;
+    object-fit: cover;
+    background-color: #e9ecef;
+}
+
+.user-avatar.initials {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    color: white;
+    text-transform: uppercase;
+}
+
+/* Category and section image styles */
+.category-image, .section-image {
+    object-fit: cover;
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+}
+
+/* Avatar container fixes */
+.avatar {
+    position: relative;
+    display: inline-block;
+    overflow: hidden;
+}
+
+.avatar img {
+    border-radius: 50%;
+    object-fit: cover;
+    width: 100%;
+    height: 100%;
+}
+
+/* Dropdown avatar fixes */
+.navbar-nav .dropdown-toggle .avatar {
+    width: 32px;
+    height: 32px;
+}
+
+.navbar-nav .dropdown-toggle .avatar img {
+    width: 32px;
+    height: 32px;
+}
+
+/* Card avatar fixes */
+.card .avatar {
+    width: 40px;
+    height: 40px;
+}
+
+.card .avatar img {
+    width: 40px;
+    height: 40px;
+}
+
+/* Fix navbar brand logo */
+.navbar-brand img {
+    max-height: 40px;
+    width: auto;
+}
+
+/* Fix sidebar logo */
+.app-brand img {
+    max-height: 32px;
+    width: auto;
+}
+
+/* Image error handling */
+img[onerror] {
+    background-color: #f8f9fa;
+}
+
+/* Loading state for images */
+img[src=""], img:not([src]) {
+    background: #f8f9fa;
+    min-height: 40px;
+    min-width: 40px;
+    border: 1px solid #dee2e6;
+}
+
+/* Ensure SVG placeholders scale properly */
+img[src*="placeholder"] {
+    max-width: 100%;
+    height: auto;
+}
+
+/* Better button and form styling */
+.btn {
+    transition: all 0.2s ease-in-out;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+/* Card improvements */
+.card {
+    box-shadow: 0 2px 6px 0 rgba(67, 89, 113, 0.12);
+    border: 1px solid rgba(67, 89, 113, 0.1);
+}
+
+.card:hover {
+    box-shadow: 0 4px 12px 0 rgba(67, 89, 113, 0.16);
+}
+
+/* Loading animation for missing content */
+@keyframes shimmer {
+    0% { background-position: -200px 0; }
+    100% { background-position: calc(200px + 100%) 0; }
+}
+
+.loading-placeholder {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200px 100%;
+    animation: shimmer 1.5s infinite;
+}
+
+/* Responsive improvements */
+@media (max-width: 768px) {
+    .navbar-nav .nav-item {
+        margin: 0.25rem 0;
+    }
+    
+    .avatar {
+        width: 32px;
+        height: 32px;
+    }
+    
+    .avatar img {
+        width: 32px;
+        height: 32px;
+    }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+    .loading-placeholder {
+        background: linear-gradient(90deg, #2a2a2a 25%, #3a3a3a 50%, #2a2a2a 75%);
+    }
+    
+    .placeholder-image {
+        background-color: #2a2a2a;
+        border-color: #3a3a3a;
+        color: #adb5bd;
+    }
+}
+
+/* Focus states for accessibility */
+.nav-link:focus,
+.btn:focus {
+    outline: 2px solid #696cff;
+    outline-offset: 2px;
+}
+
+/* Print styles */
+@media print {
+    .avatar img {
+        background: #696cff !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+}

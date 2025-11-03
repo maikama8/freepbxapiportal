@@ -70,17 +70,27 @@ class TestFreePBXConnection extends Command
         try {
             $client = app(FreePBXApiClient::class);
             
-            // Test basic connection
+            // Test basic connection using GraphQL
             $this->line('   → Testing API endpoint...');
-            $response = $client->get('extensions');
+            $response = $client->post('gql', [
+                'query' => '{ system { version } }'
+            ]);
             
-            if ($response && isset($response['status']) && $response['status'] === true) {
+            if ($response && isset($response['data']['system']['version'])) {
                 $this->line('   ✅ API connection successful');
                 $this->line('   ✅ Authentication successful');
                 
-                if (isset($response['data']) && is_array($response['data'])) {
-                    $extensionCount = count($response['data']);
+                // Test extension listing via GraphQL
+                try {
+                    $extensions = $client->getAllExtensions();
+                    $extensionCount = count($extensions);
                     $this->line("   ✅ Found {$extensionCount} extensions");
+                    
+                    if ($extensionCount > 0) {
+                        $this->line('   ✅ Extension data accessible via GraphQL');
+                    }
+                } catch (Exception $e) {
+                    $this->line('   ⚠️  Extension listing failed: ' . $e->getMessage());
                 }
             } else {
                 $this->line('   ❌ API connection failed - Invalid response');

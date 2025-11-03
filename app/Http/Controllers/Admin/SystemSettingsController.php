@@ -52,14 +52,52 @@ class SystemSettingsController extends Controller
     {
         try {
             $freepbxService = app(\App\Services\FreePBX\FreePBXApiClient::class);
-            $result = $freepbxService->testConnection();
             
-            return response()->json([
-                'success' => true,
-                'message' => 'FreePBX connection successful',
-                'data' => $result
-            ]);
+            // Test the connection
+            $connectionResult = $freepbxService->testConnection();
+            
+            if ($connectionResult) {
+                // Get additional system information
+                try {
+                    $systemInfo = $freepbxService->post('gql', [
+                        'query' => '{ system { version } }'
+                    ]);
+                    
+                    return response()->json([
+                        'success' => true,
+                        'message' => 'FreePBX connection successful',
+                        'data' => [
+                            'connected' => true,
+                            'version' => $systemInfo['data']['system']['version'] ?? 'Unknown',
+                            'api_url' => config('voip.freepbx.api_url'),
+                            'timestamp' => now()->toISOString()
+                        ]
+                    ]);
+                } catch (\Exception $e) {
+                    return response()->json([
+                        'success' => true,
+                        'message' => 'FreePBX connection successful (basic test passed)',
+                        'data' => [
+                            'connected' => true,
+                            'version' => 'Unable to retrieve version info',
+                            'api_url' => config('voip.freepbx.api_url'),
+                            'timestamp' => now()->toISOString()
+                        ]
+                    ]);
+                }
+            } else {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'FreePBX connection failed - Unable to connect to API'
+                ], 500);
+            }
+            
         } catch (\Exception $e) {
+            \Log::error('FreePBX Connection Test Error', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
             return response()->json([
                 'success' => false,
                 'message' => 'FreePBX connection failed: ' . $e->getMessage()

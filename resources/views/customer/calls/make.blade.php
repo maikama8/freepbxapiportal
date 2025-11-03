@@ -29,10 +29,40 @@
                             <div class="form-text">The number that will be displayed to the recipient</div>
                         </div>
 
-                        <!-- Rate Information -->
+                        <!-- Enhanced Rate Information -->
                         <div id="rateInfo" class="alert alert-info d-none">
                             <h6><i class="fas fa-info-circle"></i> Rate Information</h6>
                             <div id="rateDetails"></div>
+                            
+                            <!-- Cost Predictions -->
+                            <div id="costPredictions" class="mt-3">
+                                <h6 class="mb-2">Cost Predictions</h6>
+                                <div class="row text-center">
+                                    <div class="col-3">
+                                        <div class="prediction-1min">$0.00</div>
+                                        <small class="text-muted">1 min</small>
+                                    </div>
+                                    <div class="col-3">
+                                        <div class="prediction-5min">$0.00</div>
+                                        <small class="text-muted">5 min</small>
+                                    </div>
+                                    <div class="col-3">
+                                        <div class="prediction-10min">$0.00</div>
+                                        <small class="text-muted">10 min</small>
+                                    </div>
+                                    <div class="col-3">
+                                        <div class="prediction-30min">$0.00</div>
+                                        <small class="text-muted">30 min</small>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Billing Increment Info -->
+                            <div id="billingIncrementInfo" class="mt-3">
+                                <small class="text-muted">
+                                    <i class="fas fa-clock"></i> <span id="incrementDescription">Billing information</span>
+                                </small>
+                            </div>
                         </div>
 
                         <!-- Balance Check -->
@@ -303,7 +333,7 @@ function hangupCall(callId) {
 }
 
 function checkCallRate(destination) {
-    fetch('{{ route("customer.calls.rate") }}?' + new URLSearchParams({destination: destination}))
+    fetch('{{ route("customer.calls.enhanced-rate") }}?' + new URLSearchParams({destination: destination}))
         .then(response => response.json())
         .then(data => {
             if (data.success) {
@@ -316,6 +346,19 @@ function checkCallRate(destination) {
                     <strong>Minimum Duration:</strong> ${data.rate.minimum_duration} seconds<br>
                     <strong>Billing Increment:</strong> ${data.rate.billing_increment} seconds
                 `;
+                
+                // Update cost predictions
+                if (data.rate.cost_predictions) {
+                    data.rate.cost_predictions.forEach(prediction => {
+                        const element = document.querySelector(`.prediction-${prediction.duration_minutes}min`);
+                        if (element) {
+                            element.textContent = prediction.formatted_cost;
+                        }
+                    });
+                }
+                
+                // Update billing increment description
+                document.getElementById('incrementDescription').textContent = data.rate.increment_description;
                 
                 rateInfo.classList.remove('d-none');
             } else {

@@ -159,17 +159,97 @@
                 </div>
             </div>
 
+            <!-- SIP Configuration Details -->
+            @if($user->sipAccounts->where('is_primary', true)->first())
+                @php $primarySip = $user->sipAccounts->where('is_primary', true)->first(); @endphp
+                <div class="card mt-3">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5><i class="bx bx-phone-call"></i> SIP Configuration</h5>
+                        <button class="btn btn-sm btn-outline-secondary" onclick="toggleSipPassword()">
+                            <i class="bx bx-show" id="sipPasswordIcon"></i> Show Password
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-2">
+                            <div class="col-12">
+                                <label class="form-label fw-semibold">Extension Number:</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" value="{{ $primarySip->sip_username }}" readonly>
+                                    <button class="btn btn-outline-secondary" onclick="copyToClipboard('{{ $primarySip->sip_username }}')">
+                                        <i class="bx bx-copy"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label fw-semibold">SIP Password:</label>
+                                <div class="input-group">
+                                    <input type="password" class="form-control" id="sipPassword" value="{{ $primarySip->sip_password }}" readonly>
+                                    <button class="btn btn-outline-secondary" onclick="copyToClipboard('{{ $primarySip->sip_password }}')">
+                                        <i class="bx bx-copy"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label fw-semibold">SIP Server:</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" value="{{ $primarySip->sip_server }}" readonly>
+                                    <button class="btn btn-outline-secondary" onclick="copyToClipboard('{{ $primarySip->sip_server }}')">
+                                        <i class="bx bx-copy"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label fw-semibold">SIP Port:</label>
+                                <input type="text" class="form-control" value="{{ $primarySip->sip_port }}" readonly>
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label fw-semibold">Context:</label>
+                                <input type="text" class="form-control" value="{{ $primarySip->sip_context }}" readonly>
+                            </div>
+                            @if($primarySip->freepbx_settings && isset($primarySip->freepbx_settings['voicemail_password']))
+                            <div class="col-12">
+                                <label class="form-label fw-semibold">Voicemail PIN:</label>
+                                <div class="input-group">
+                                    <input type="password" class="form-control" id="vmPassword" value="{{ $primarySip->freepbx_settings['voicemail_password'] }}" readonly>
+                                    <button class="btn btn-outline-secondary" onclick="toggleVmPassword()">
+                                        <i class="bx bx-show" id="vmPasswordIcon"></i>
+                                    </button>
+                                    <button class="btn btn-outline-secondary" onclick="copyToClipboard('{{ $primarySip->freepbx_settings['voicemail_password'] }}')">
+                                        <i class="bx bx-copy"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            @endif
+                        </div>
+                        
+                        <div class="mt-3">
+                            <div class="alert alert-info">
+                                <i class="bx bx-info-circle"></i>
+                                <strong>SIP URI:</strong> {{ $primarySip->sip_uri }}
+                            </div>
+                        </div>
+                        
+                        <div class="mt-2">
+                            <small class="text-muted">
+                                <i class="bx bx-time"></i> 
+                                Last registered: {{ $primarySip->last_registered_at ? $primarySip->last_registered_at->diffForHumans() : 'Never' }}
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            @endif
+
             <!-- SIP Accounts Section -->
             <div class="card mt-3">
                 <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5><i class="bx bx-phone"></i> SIP Accounts</h5>
+                    <h5><i class="bx bx-phone"></i> All SIP Accounts</h5>
                     <a href="{{ route('customer.sip-accounts.index') }}" class="btn btn-sm btn-outline-primary">
                         <i class="bx bx-cog"></i> Manage
                     </a>
                 </div>
                 <div class="card-body">
                     @if($user->sipAccounts->count() > 0)
-                        @foreach($user->sipAccounts->take(2) as $sipAccount)
+                        @foreach($user->sipAccounts->take(3) as $sipAccount)
                             <div class="d-flex justify-content-between align-items-center mb-2 p-2 border rounded">
                                 <div>
                                     <div class="fw-semibold">{{ $sipAccount->sip_username }}</div>
@@ -184,10 +264,10 @@
                             </div>
                         @endforeach
                         
-                        @if($user->sipAccounts->count() > 2)
+                        @if($user->sipAccounts->count() > 3)
                             <div class="text-center mt-2">
                                 <small class="text-muted">
-                                    +{{ $user->sipAccounts->count() - 2 }} more accounts
+                                    +{{ $user->sipAccounts->count() - 3 }} more accounts
                                 </small>
                             </div>
                         @endif
@@ -270,3 +350,62 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+function toggleSipPassword() {
+    const passwordField = document.getElementById('sipPassword');
+    const icon = document.getElementById('sipPasswordIcon');
+    
+    if (passwordField.type === 'password') {
+        passwordField.type = 'text';
+        icon.className = 'bx bx-hide';
+    } else {
+        passwordField.type = 'password';
+        icon.className = 'bx bx-show';
+    }
+}
+
+function toggleVmPassword() {
+    const passwordField = document.getElementById('vmPassword');
+    const icon = document.getElementById('vmPasswordIcon');
+    
+    if (passwordField.type === 'password') {
+        passwordField.type = 'text';
+        icon.className = 'bx bx-hide';
+    } else {
+        passwordField.type = 'password';
+        icon.className = 'bx bx-show';
+    }
+}
+
+function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(function() {
+        // Show success message
+        const toast = document.createElement('div');
+        toast.className = 'toast align-items-center text-white bg-success border-0 position-fixed';
+        toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999;';
+        toast.innerHTML = `
+            <div class="d-flex">
+                <div class="toast-body">
+                    <i class="bx bx-check"></i> Copied to clipboard!
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+            </div>
+        `;
+        
+        document.body.appendChild(toast);
+        const bsToast = new bootstrap.Toast(toast);
+        bsToast.show();
+        
+        // Remove toast after it's hidden
+        toast.addEventListener('hidden.bs.toast', function() {
+            document.body.removeChild(toast);
+        });
+    }).catch(function(err) {
+        console.error('Could not copy text: ', err);
+        alert('Failed to copy to clipboard');
+    });
+}
+</script>
+@endpush

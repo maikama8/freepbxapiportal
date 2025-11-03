@@ -19,6 +19,21 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        // Register Blade directives for placeholders
+        \Blade::directive('userAvatar', function ($expression) {
+            return "<?php echo \App\Helpers\PlaceholderHelper::userAvatarHtml($expression); ?>";
+        });
+        
+        \Blade::directive('categoryImage', function ($expression) {
+            return "<?php echo \App\Helpers\PlaceholderHelper::categoryImageHtml($expression); ?>";
+        });
+        
+        \Blade::directive('sectionImage', function ($expression) {
+            return "<?php echo \App\Helpers\PlaceholderHelper::sectionImageHtml($expression); ?>";
+        });
+        
+        \Blade::directive('placeholder', function ($expression) {
+            return "<?php echo \App\Helpers\PlaceholderHelper::getPlaceholder($expression); ?>";
+        });
     }
 }

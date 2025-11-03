@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug DataTable</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <div class="container mt-5">
+        <div class="row justify-content-center">
+            <div class="col-md-10">
+                <div class="card">
+                    <div class="card-header">
+                        <h4>Debug DataTable AJAX Call</h4>
+                    </div>
+                    <div class="card-body">
+                        <div id="result"></div>
+                        
+                        <h5>Test DataTable AJAX Endpoint</h5>
+                        <button class="btn btn-primary" onclick="testDataTableEndpoint()">Test AJAX Call</button>
+                        
+                        <h5 class="mt-4">Test Authentication</h5>
+                        <button class="btn btn-info" onclick="testAuth()">Test Auth Status</button>
+                        
+                        <h5 class="mt-4">Test with Session</h5>
+                        <button class="btn btn-success" onclick="testWithSession()">Test with Session Cookie</button>
+                        
+                        <div class="mt-4">
+                            <h6>Instructions:</h6>
+                            <ol>
+                                <li>First, login to the admin panel in another tab</li>
+                                <li>Then come back here and click "Test with Session Cookie"</li>
+                                <li>This will test if the DataTable endpoint works when authenticated</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function testDataTableEndpoint() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = '<div class="alert alert-info">Testing DataTable endpoint...</div>';
+            
+            try {
+                const response = await fetch('/admin/customers/data?draw=1&start=0&length=10', {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+                
+                const responseText = await response.text();
+                
+                if (response.ok) {
+                    try {
+                        const data = JSON.parse(responseText);
+                        resultDiv.innerHTML = `<div class="alert alert-success">
+                            <strong>Success!</strong><br>
+                            Records Total: ${data.recordsTotal}<br>
+                            Records Filtered: ${data.recordsFiltered}<br>
+                            Data Count: ${data.data.length}<br>
+                            <details>
+                                <summary>Raw Response</summary>
+                                <pre>${JSON.stringify(data, null, 2)}</pre>
+                            </details>
+                        </div>`;
+                    } catch (e) {
+                        resultDiv.innerHTML = `<div class="alert alert-warning">
+                            <strong>Response received but not JSON:</strong><br>
+                            <pre>${responseText}</pre>
+                        </div>`;
+                    }
+                } else {
+                    resultDiv.innerHTML = `<div class="alert alert-danger">
+                        <strong>Request failed (${response.status}):</strong><br>
+                        <pre>${responseText}</pre>
+                    </div>`;
+                }
+                
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="alert alert-danger">
+                    <strong>Network Error:</strong> ${error.message}
+                </div>`;
+            }
+        }
+        
+        async function testWithSession() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = '<div class="alert alert-info">Testing with session cookies...</div>';
+            
+            try {
+                const response = await fetch('/admin/customers/data?draw=1&start=0&length=10', {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    credentials: 'include' // Include cookies
+                });
+                
+                const responseText = await response.text();
+                
+                if (response.ok) {
+                    try {
+                        const data = JSON.parse(responseText);
+                        resultDiv.innerHTML = `<div class="alert alert-success">
+                            <strong>Success with Session!</strong><br>
+                            Records Total: ${data.recordsTotal}<br>
+                            Records Filtered: ${data.recordsFiltered}<br>
+                            Data Count: ${data.data.length}<br>
+                            <details>
+                                <summary>Sample Data</summary>
+                                <pre>${JSON.stringify(data.data.slice(0, 2), null, 2)}</pre>
+                            </details>
+                        </div>`;
+                    } catch (e) {
+                        resultDiv.innerHTML = `<div class="alert alert-warning">
+                            <strong>Response received but not JSON:</strong><br>
+                            <pre>${responseText}</pre>
+                        </div>`;
+                    }
+                } else {
+                    resultDiv.innerHTML = `<div class="alert alert-danger">
+                        <strong>Request failed (${response.status}):</strong><br>
+                        Status: ${response.status}<br>
+                        <pre>${responseText}</pre>
+                    </div>`;
+                }
+                
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="alert alert-danger">
+                    <strong>Network Error:</strong> ${error.message}
+                </div>`;
+            }
+        }
+        
+        async function testAuth() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = '<div class="alert alert-info">Testing authentication status...</div>';
+            
+            try {
+                const response = await fetch('/admin/debug/test-auth', {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    credentials: 'include'
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `<div class="alert alert-${data.authenticated ? 'success' : 'warning'}">
+                        <strong>Authentication Status:</strong><br>
+                        Authenticated: ${data.authenticated}<br>
+                        ${data.user ? `User: ${data.user.name} (${data.user.email})<br>Role: ${data.user.role}<br>` : ''}
+                        Session ID: ${data.session_id}<br>
+                        CSRF Token: ${data.csrf_token}
+                    </div>`;
+                } else {
+                    resultDiv.innerHTML = `<div class="alert alert-danger">
+                        <strong>Auth test failed:</strong> ${response.status}
+                    </div>`;
+                }
+                
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="alert alert-danger">
+                    <strong>Network Error:</strong> ${error.message}
+                </div>`;
+            }
+        }
+    </script>
+</body>
+</html>

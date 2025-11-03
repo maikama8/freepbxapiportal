@@ -152,4 +152,125 @@ class CustomerController extends Controller
         
         return view('customer.balance-history', compact('transactions'));
     }
+
+    /**
+     * Update caller ID settings
+     */
+    public function updateCallerId(Request $request)
+    {
+        $request->validate([
+            'caller_id' => 'required|string|max:20',
+            'caller_name' => 'nullable|string|max:50'
+        ]);
+
+        $user = Auth::user();
+        
+        // Validate that the caller ID belongs to the user (either their DID or extension)
+        $isValidCallerId = false;
+        
+        // Check if it's one of their DID numbers
+        if ($user->didNumbers) {
+            $didNumber = $user->didNumbers()->where('did_number', $request->caller_id)->first();
+            if ($didNumber) {
+                $isValidCallerId = true;
+            }
+        }
+        
+        // Check if it's one of their extensions
+        $sipAccount = $user->sipAccounts()->where('sip_username', $request->caller_id)->first();
+        if ($sipAccount) {
+            $isValidCallerId = true;
+        }
+
+        if (!$isValidCallerId) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid caller ID. You can only use your assigned DID numbers or extensions.'
+            ], 422);
+        }
+
+        try {
+            $user->update([
+                'caller_id' => $request->caller_id,
+                'caller_name' => $request->caller_name
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Caller ID updated successfully'
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update caller ID: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get available caller IDs for the user
+     */
+    public function getAvailableCallerIds()
+    {
+        $user = Auth::user();
+        $callerIds = [];
+
+        // Add DID numbers if the relationship exists
+        if (method_exists($user, 'didNumbers')) {
+            $didNumbers = $user->didNumbers()->where('status', 'active')->get();
+            foreach ($didNumbers as $did) {
+                $callerIds[] = [
+                    'id' => $did->did_number,
+                    'number' => $did->formatted_number ?? $did->did_number,
+                    'type' => 'DID',
+                    'description' => "DID Number ({$did->country_code})"
+                ];
+            }
+        }
+
+        // Add extensions
+        $sipAccounts = $user->sipAccounts()->get();
+        foreach ($sipAccounts as $sip) {
+            $callerIds[] = [
+                'id' => $sip->sip_username,
+                'number' => $sip->sip_username,
+                'type' => 'Extension',
+                'description' => $sip->is_primary ? 'Primary Extension' : 'Extension'
+            ];
+        }
+
+        return response()->json([
+            'success' => true,
+            'caller_ids' => $callerIds,
+            'current_caller_id' => $user->caller_id,
+            'current_caller_name' => $user->caller_name
+        ]);
+    }
+
+    /**
+     * Get user's SIP account details
+     */
+    public function getSipAccounts()
+    {
+        $user = Auth::user();
+        
+        $sipAccounts = $user->sipAccounts()->get()->map(function ($sip) {
+            return [
+                'id' => $sip->id,
+                'extension' => $sip->sip_username,
+                'password' => $sip->sip_password,
+                'server' => $sip->sip_server,
+                'port' => $sip->sip_port,
+                'is_primary' => $sip->is_primary,
+                'status' => $sip->status,
+                'created_at' => $sip->created_at->format('M d, Y')
+            ];
+        });
+
+        return response()->json([
+            'success' => true,
+            'sip_accounts' => $sipAccounts
+        ]);
+    }
 }

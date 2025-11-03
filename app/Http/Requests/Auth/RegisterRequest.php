@@ -40,7 +40,7 @@ class RegisterRequest extends BaseFormRequest
                 'min:' . $passwordMinLength,
                 'max:255',
                 'confirmed',
-                'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/'
+                'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]+$/'
             ],
             'password_confirmation' => [
                 'required',

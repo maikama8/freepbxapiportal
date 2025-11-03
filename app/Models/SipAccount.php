@@ -25,6 +25,12 @@ class SipAccount extends Model
         'voicemail_email',
         'freepbx_extension_id',
         'freepbx_settings',
+        'freepbx_sync_status',
+        'freepbx_last_sync_at',
+        'freepbx_extension_data',
+        'sync_retry_count',
+        'sync_last_error',
+        'sync_last_attempt_at',
         'last_registered_at',
         'last_registered_ip',
         'notes',
@@ -35,6 +41,9 @@ class SipAccount extends Model
         'call_forward_enabled' => 'boolean',
         'voicemail_enabled' => 'boolean',
         'freepbx_settings' => 'array',
+        'freepbx_extension_data' => 'array',
+        'freepbx_last_sync_at' => 'datetime',
+        'sync_last_attempt_at' => 'datetime',
         'last_registered_at' => 'datetime',
     ];
 
@@ -79,36 +88,55 @@ class SipAccount extends Model
     }
 
     /**
-     * Get the next available SIP username
+     * Get the next available SIP username (extension number)
      */
     public static function getNextSipUsername(): string
     {
-        $startRange = config('voip.freepbx.extensions.start_range', 2000);
-        $endRange = config('voip.freepbx.extensions.end_range', 9999);
+        return self::getNextAvailableExtension();
+    }
+
+    /**
+     * Get the next available extension number
+     */
+    public static function getNextAvailableExtension(): string
+    {
+        $startRange = config('voip.extension_start_range', 2000);
+        $endRange = config('voip.extension_end_range', 9999);
         
-        $lastExtension = self::where('sip_username', 'REGEXP', '^[0-9]+$')
-            ->orderBy('sip_username', 'desc')
-            ->first();
-        
-        if ($lastExtension) {
-            $nextExtension = (int) $lastExtension->sip_username + 1;
-        } else {
-            $nextExtension = $startRange;
+        // Get all numeric extensions in the configured range
+        $extensions = self::select('sip_username')
+            ->get()
+            ->filter(function ($account) use ($startRange, $endRange) {
+                $username = $account->sip_username;
+                return is_numeric($username) && 
+                       (int) $username >= $startRange && 
+                       (int) $username <= $endRange;
+            })
+            ->pluck('sip_username')
+            ->map(function ($username) {
+                return (int) $username;
+            })
+            ->sort()
+            ->values();
+
+        if ($extensions->isEmpty()) {
+            return (string) $startRange;
         }
-        
-        // Ensure we don't exceed the range
+
+        // Find the next available extension
+        $lastExtension = $extensions->last();
+        $nextExtension = $lastExtension + 1;
+
         if ($nextExtension > $endRange) {
-            throw new \Exception('No available SIP extensions in the configured range');
-        }
-        
-        // Check if extension already exists
-        while (self::where('sip_username', (string) $nextExtension)->exists()) {
-            $nextExtension++;
-            if ($nextExtension > $endRange) {
-                throw new \Exception('No available SIP extensions in the configured range');
+            // Look for gaps in the sequence
+            for ($i = $startRange; $i <= $endRange; $i++) {
+                if (!$extensions->contains($i)) {
+                    return (string) $i;
+                }
             }
+            throw new \Exception('No available extensions in the configured range');
         }
-        
+
         return (string) $nextExtension;
     }
 

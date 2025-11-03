@@ -300,16 +300,71 @@
 <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
 <script>
 $(document).ready(function() {
+    console.log('Initializing DataTable...');
+    console.log('CSRF Token:', $('meta[name="csrf-token"]').attr('content'));
+    
     // Initialize DataTable
     const table = $('#customersTable').DataTable({
         processing: true,
         serverSide: true,
         ajax: {
             url: '{{ route("admin.customers.data") }}',
+            type: 'GET',
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            xhrFields: {
+                withCredentials: true
+            },
             data: function(d) {
                 d.role_filter = $('#roleFilter').val();
                 d.account_type_filter = $('#accountTypeFilter').val();
                 d.status_filter = $('#statusFilter').val();
+                console.log('DataTable request data:', d);
+            },
+            error: function(xhr, error, code) {
+                console.error('DataTable AJAX Error:', {
+                    status: xhr.status,
+                    statusText: xhr.statusText,
+                    responseText: xhr.responseText,
+                    error: error,
+                    code: code
+                });
+                
+                let errorMessage = 'Error loading data: ';
+                if (xhr.status === 401) {
+                    errorMessage += 'Not authenticated. Please refresh the page and login again.';
+                } else if (xhr.status === 403) {
+                    errorMessage += 'Access denied. You may not have admin permissions.';
+                } else if (xhr.responseJSON?.message) {
+                    errorMessage += xhr.responseJSON.message;
+                } else {
+                    errorMessage += `HTTP ${xhr.status} - ${xhr.statusText}`;
+                }
+                
+                alert(errorMessage);
+                
+                // Show error in table
+                $('#customersTable tbody').html(`
+                    <tr>
+                        <td colspan="11" class="text-center text-danger">
+                            <i class="bx bx-error"></i> ${errorMessage}
+                            <br><small>Check browser console for more details</small>
+                        </td>
+                    </tr>
+                `);
+            },
+            beforeSend: function(xhr) {
+                console.log('DataTable AJAX request starting...');
+                console.log('Request URL:', '{{ route("admin.customers.data") }}');
+                console.log('CSRF Token:', $('meta[name="csrf-token"]').attr('content'));
+            },
+            complete: function(xhr, status) {
+                console.log('DataTable AJAX request completed:', status);
+                if (status === 'success') {
+                    console.log('Response received successfully');
+                }
             }
         },
         columns: [

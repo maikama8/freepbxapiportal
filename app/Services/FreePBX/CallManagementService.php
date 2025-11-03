@@ -71,7 +71,7 @@ class CallManagementService
     /**
      * Terminate an active call
      */
-    public function terminateCall(string $callId): array
+    public function terminateCall(string $callId): bool
     {
         try {
             Log::info('Terminating call', ['call_id' => $callId]);
@@ -81,12 +81,7 @@ class CallManagementService
             // Update call record
             $this->updateCallRecordOnTermination($callId);
 
-            return [
-                'success' => true,
-                'call_id' => $callId,
-                'status' => 'terminated',
-                'message' => 'Call terminated successfully'
-            ];
+            return true;
 
         } catch (FreePBXApiException $e) {
             Log::error('Call termination failed', [
@@ -94,7 +89,53 @@ class CallManagementService
                 'error' => $e->getMessage()
             ]);
 
-            throw $e;
+            return false;
+        }
+    }
+
+    /**
+     * Force terminate a call (emergency termination)
+     */
+    public function forceTerminateCall(string $callId): bool
+    {
+        try {
+            Log::warning('Force terminating call', ['call_id' => $callId]);
+
+            // Try multiple termination methods
+            $methods = [
+                "calls/{$callId}/hangup",
+                "calls/{$callId}/terminate",
+                "calls/{$callId}/kill"
+            ];
+
+            $success = false;
+            foreach ($methods as $method) {
+                try {
+                    $this->apiClient->post($method);
+                    $success = true;
+                    break;
+                } catch (FreePBXApiException $e) {
+                    Log::debug("Termination method {$method} failed: " . $e->getMessage());
+                    continue;
+                }
+            }
+
+            if ($success) {
+                $this->updateCallRecordOnTermination($callId);
+                Log::info('Force terminated call successfully', ['call_id' => $callId]);
+            } else {
+                Log::error('All termination methods failed', ['call_id' => $callId]);
+            }
+
+            return $success;
+
+        } catch (\Exception $e) {
+            Log::error('Force termination failed', [
+                'call_id' => $callId,
+                'error' => $e->getMessage()
+            ]);
+
+            return false;
         }
     }
 
