@@ -20,6 +20,14 @@ A comprehensive enterprise-grade VoIP platform built with Laravel that integrate
 - **Deployment** - Production-ready deployment configurations
 - **Testing** - Comprehensive test suite (Unit, Integration, Feature tests)
 
+### Production Features
+- **Advanced Monitoring** - DID inventory monitoring, billing accuracy checks, real-time performance monitoring
+- **Multi-Channel Alerting** - Email, Slack, SMS, and webhook notifications for critical issues
+- **Database Optimization** - Advanced indexes, partitioning for high-volume tables, automated maintenance
+- **Cron Job Management** - Comprehensive monitoring, health checks, backup and recovery systems
+- **Production Deployment** - Complete cron job configuration, log rotation, and maintenance scripts
+- **Advanced Logging** - Specialized logging channels with rotation and cleanup procedures
+
 ## 📋 Requirements
 
 - PHP 8.1+
@@ -61,14 +69,62 @@ php artisan serve
 
 ### Production Setup
 
-For production deployment, use the provided deployment scripts:
+For production deployment, use the provided deployment scripts and configuration:
 
 ```bash
 # Production environment setup
 sudo ./deployment/scripts/setup-production.sh
 
+# Database optimization and maintenance
+sudo ./deployment/scripts/database-maintenance.sh /var/www/html/voip-platform /usr/bin/php
+
+# Cron job monitoring setup
+sudo ./deployment/scripts/setup-cron-monitoring.sh /var/www/html/voip-platform /usr/bin/php admin@yourdomain.com
+
 # Database replication (optional)
 sudo ./deployment/scripts/setup-database-replication.sh
+```
+
+#### Cron Job Configuration
+
+The platform requires several cron jobs for optimal operation. Choose your setup method:
+
+**For cPanel hosting:**
+```bash
+# Use the cPanel-specific configuration
+cat deployment/cron/cpanel-cron-setup.txt
+# Follow the instructions to add each job in cPanel
+```
+
+**For direct server access:**
+```bash
+# Install the production crontab
+crontab deployment/cron/production-crontab.txt
+# Edit paths and email addresses as needed
+```
+
+**For systemd-based systems:**
+```bash
+# Generate and install systemd services
+php artisan cron:generate-setup --type=systemd --output=/tmp/laravel-scheduler
+sudo cp /tmp/laravel-scheduler.* /etc/systemd/system/
+sudo systemctl enable laravel-scheduler.timer
+sudo systemctl start laravel-scheduler.timer
+```
+
+#### Database Optimization
+
+Run database optimization for production:
+
+```bash
+# Apply advanced performance indexes
+php artisan migrate --force
+
+# Run database performance monitoring
+php artisan db:performance-monitor --report --optimize
+
+# Set up automated maintenance
+php artisan db:maintenance --cleanup --optimize --analyze
 ```
 
 ## ⚙️ Configuration
@@ -135,12 +191,98 @@ API documentation is available at `/api/docs` with endpoints for:
 
 The platform includes several useful Artisan commands:
 
+### System Monitoring
 ```bash
-# System health check
-php artisan system:health-check
+# Advanced system monitoring with alerts
+php artisan system:advanced-monitor --alert --report
 
-# Database maintenance
-php artisan db:maintenance --optimize --cleanup
+# Database performance monitoring
+php artisan db:performance-monitor --report --optimize
+
+# Cron job health monitoring
+php artisan cron:health-monitor --alert
+
+# System health check
+php artisan system:health-check --alert
+```
+
+### Database Management
+```bash
+# Database maintenance and optimization
+php artisan db:maintenance --optimize --cleanup --analyze
+
+# Database performance monitoring
+php artisan db:performance-monitor --report
+
+# Clean up old records
+php artisan db:cleanup --table=audit_logs --days=90
+```
+
+### Billing and CDR Processing
+```bash
+# Automated CDR processing
+php artisan cdr:automated-processing --batch-size=50
+
+# Real-time billing monitoring
+php artisan billing:monitor-realtime --terminate
+
+# Monthly DID billing
+php artisan billing:monthly-did-charges --suspend-insufficient
+
+# FreePBX synchronization
+php artisan freepbx:automated-sync --sync-mode=incremental
+```
+
+### Cron Job Management
+```bash
+# Monitor cron job status
+php artisan cron:monitor status
+
+# Generate cron setup scripts
+php artisan cron:generate-setup --type=cpanel
+
+# Kill stuck cron jobs
+php artisan cron:monitor kill-stuck --max-runtime=120
+
+# Performance reporting
+php artisan cron:performance-report --days=7
+```
+
+## 📊 Monitoring & Alerting
+
+### Web Dashboards
+- **Admin Monitoring**: `/admin/monitoring` - System health and performance metrics
+- **Cron Job Management**: `/admin/cron-jobs` - Cron job status and history
+- **Billing Configuration**: `/admin/billing/configuration` - Advanced billing settings
+- **Automation Monitoring**: `/admin/automation/monitoring` - Automated process monitoring
+
+### Alerting Channels
+Configure alerting in your `.env` file:
+
+```env
+# Email Alerts
+ALERT_EMAIL_ENABLED=true
+ALERT_EMAIL_RECIPIENTS=admin@yourdomain.com,ops@yourdomain.com
+
+# Slack Alerts
+ALERT_SLACK_WEBHOOK_URL=https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK
+ALERT_SLACK_USERNAME="VoIP Platform Alerts"
+ALERT_SLACK_EMOJI=":warning:"
+
+# Log Retention
+LOG_BILLING_DAYS=90
+LOG_SECURITY_DAYS=365
+LOG_PAYMENTS_DAYS=365
+LOG_ALERTS_DAYS=365
+```
+
+### Monitoring Features
+- **DID Inventory Monitoring** - Alerts when DID inventory runs low
+- **Billing Accuracy Monitoring** - Detects billing discrepancies and unprocessed calls
+- **Real-time Billing Monitoring** - Monitors active calls and balance enforcement
+- **System Performance Monitoring** - CPU, memory, disk usage, and response time monitoring
+- **Cron Job Monitoring** - Tracks job execution, failures, and performance
+- **Database Performance Monitoring** - Query performance, index usage, and optimization recommendations
 
 # System backup
 php artisan backup:system --compress
