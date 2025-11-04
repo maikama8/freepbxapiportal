@@ -101,7 +101,6 @@ Route::middleware(['auth'])->group(function () {
         // Caller ID Management
         Route::post('/caller-id/update', [App\Http\Controllers\Customer\CustomerController::class, 'updateCallerId'])->name('caller-id.update');
         Route::get('/caller-id/available', [App\Http\Controllers\Customer\CustomerController::class, 'getAvailableCallerIds'])->name('caller-id.available');
-        Route::get('/sip-accounts', [App\Http\Controllers\Customer\CustomerController::class, 'getSipAccounts'])->name('sip-accounts');
         
         // DID Management
         Route::prefix('dids')->name('dids.')->group(function () {
